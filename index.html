@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Apex Wealth — Institutional Portfolio Platform</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
@@ -168,7 +167,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 </style>
 </head>
 <body>
-
 <div class="shell">
 
 <!-- ═══ SIDEBAR ═══ -->
@@ -182,75 +180,75 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   </div>
 
   <div class="nav-group">Dashboards</div>
-  <button class="nav-item active" data-page="overview">
+  <button class="nav-item active" data-page="overview" onclick="navTo('overview')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor"/><rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor" opacity=".3"/></svg>
     Overview
     <span class="nav-badge nb-green">Live</span>
   </button>
-  <button class="nav-item" data-page="accounts">
+  <button class="nav-item" data-page="accounts" onclick="navTo('accounts')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
     Accounts
     <span class="nav-badge nb-blue">10</span>
   </button>
 
   <div class="nav-group">Analysis</div>
-  <button class="nav-item" data-page="performance">
+  <button class="nav-item" data-page="performance" onclick="navTo('performance')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><polyline points="1,11 4,7 7,8 10,4 13,5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Performance
   </button>
-  <button class="nav-item" data-page="attribution">
+  <button class="nav-item" data-page="attribution" onclick="navTo('attribution')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="3" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="5.5" y="4" width="3" height="9" rx="1" fill="currentColor" opacity=".8"/><rect x="10" y="1" width="3" height="12" rx="1" fill="currentColor"/></svg>
     Attribution
   </button>
-  <button class="nav-item" data-page="risk">
+  <button class="nav-item" data-page="risk" onclick="navTo('risk')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 13h12L7 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 5.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="10.5" r=".7" fill="currentColor"/></svg>
     Risk Metrics
   </button>
-  <button class="nav-item" data-page="montecarlo">
+  <button class="nav-item" data-page="montecarlo" onclick="navTo('montecarlo')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M1 11C2.5 9 3.5 7 5 8s2.5-2 4-4 2 1.5 4 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M1 11C2.5 10 4 9 5 9.5s2.5-1.5 4-2.5 2 1 4-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".4"/></svg>
     Monte Carlo
   </button>
-  <button class="nav-item" data-page="whatif">
+  <button class="nav-item" data-page="whatif" onclick="navTo('whatif')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M1 7h3l1.5-5 3 10 2-5h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     What-If
   </button>
 
   <div class="nav-group">Reporting</div>
-  <button class="nav-item" data-page="transactions">
+  <button class="nav-item" data-page="transactions" onclick="navTo('transactions')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M1 5h12M1 5l2.5-2.5M1 5l2.5 2.5M13 9H1M13 9l-2.5-2.5M13 9l-2.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Transactions
   </button>
-  <button class="nav-item" data-page="flows">
+  <button class="nav-item" data-page="flows" onclick="navTo('flows')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="3.5" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="10.5" cy="3.5" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="10.5" cy="10.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 6.2L8.5 4.5M5.5 7.8L8.5 9.5" stroke="currentColor" stroke-width="1.2"/></svg>
     Capital Flows
   </button>
-  <button class="nav-item" data-page="expenses">
+  <button class="nav-item" data-page="expenses" onclick="navTo('expenses')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="2.5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 6v2M5.5 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
     Expense Analyzer
   </button>
 
   <div class="nav-group">Advanced</div>
-  <button class="nav-item" data-page="tax">
+  <button class="nav-item" data-page="tax" onclick="navTo('tax')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M2.5 1.5h9L10 6H4L2.5 1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M4 6l1 6.5h4L10 6" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
     Tax Overlay
     <span class="nav-badge nb-gold">3</span>
   </button>
-  <button class="nav-item" data-page="manager">
+  <button class="nav-item" data-page="manager" onclick="navTo('manager')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="9" width="12" height="4" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="5" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="1" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>
     Manager DD
     <span class="nav-badge nb-red">1</span>
   </button>
-  <button class="nav-item" data-page="models">
+  <button class="nav-item" data-page="models" onclick="navTo('models')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M4 6h6M4 9h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
     Model Mgmt
     <span class="nav-badge nb-gold">2</span>
   </button>
-  <button class="nav-item" data-page="compliance">
+  <button class="nav-item" data-page="compliance" onclick="navTo('compliance')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M7 1L1.5 3.5v4.5C1.5 11 4 13 7 13s5.5-2 5.5-5V3.5L7 1z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M4.5 7l2 2 3-3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     Compliance &amp; GIPS
     <span class="nav-badge nb-green">✓</span>
   </button>
-  <button class="nav-item" data-page="portal">
+  <button class="nav-item" data-page="portal" onclick="navTo('portal')">
     <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="1.5" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M1 5h12" stroke="currentColor" stroke-width="1.1"/><circle cx="3.5" cy="3.2" r=".7" fill="currentColor"/><circle cx="6" cy="3.2" r=".7" fill="currentColor"/></svg>
     Client Portal
   </button>
@@ -794,9 +792,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   </div><!-- /content -->
 </div><!-- /main -->
 </div><!-- /shell -->
-
 <script>
-// ═══ DATA ═══
 // ═══════════════════════════════════════════════════
 //  APEX WEALTH — DUMMY DATA LAYER
 //  All Fidelity accounts · Inception Jan 1, 2026
@@ -995,8 +991,6 @@ DATA.mgrSearch = [
   { name:'American Funds Growth',   strat:'Multi-Cap',   aum:'$210B',alpha:0.64, sharpe:1.24, ir:0.58, dd:-9.8,  score:79 },
 ];
 
-
-// ═══ CHARTS ═══
 // ═══════════════════════════════════════════════════
 //  APEX WEALTH — CHART BUILDERS
 // ═══════════════════════════════════════════════════
@@ -1482,8 +1476,6 @@ CHARTS.buildCapture = function(id) {
   });
 };
 
-
-// ═══ APP ═══
 // ═══════════════════════════════════════════════════
 //  APEX WEALTH — APP LOGIC
 // ═══════════════════════════════════════════════════
@@ -1498,21 +1490,8 @@ const pageTitles = {
 };
 const initialized = {};
 
-function navTo(id) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  const activeBtn = document.querySelector('.nav-item[data-page="' + id + '"]');
-  if (activeBtn) activeBtn.classList.add('active');
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  const pg = document.getElementById('page-' + id);
-  if (pg) pg.classList.add('active');
-  document.getElementById('pageTitle').textContent = pageTitles[id] || id;
-  if (!initialized[id]) { initialized[id] = true; setTimeout(() => buildPage(id), 60); }
-}
-// Wire nav items
-document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
-  btn.addEventListener('click', () => navTo(btn.dataset.page));
+// nav wired via inline onclick
 });
-window.navTo = navTo;
 
 function buildPage(id) {
   if (id === 'overview')     buildOverview();
@@ -1532,6 +1511,20 @@ function buildPage(id) {
 }
 
 // ─── TAB SWITCHER ────────────────────────────────────
+
+function navTo(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  var activeBtn = document.querySelector('.nav-item[data-page="' + id + '"]');
+  if (activeBtn) activeBtn.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  var titleEl = document.getElementById('pageTitle');
+  if (titleEl) titleEl.textContent = pageTitles[id] || id;
+  if (!initialized[id]) { initialized[id] = true; setTimeout(function(){ buildPage(id); }, 60); }
+}
+window.navTo = navTo;
+
 const tabGroups = {
   perf:  ['ts','trailing','calendar','peer'],
   tx:    ['all','buy','sell','div','fee'],
