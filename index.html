@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apex Wealth — Institutional Portfolio Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0c10;--bg2:#0f1218;--bg3:#161b24;--bg4:#1e2535;
+  --border:#252d3d;--border2:#2e3a52;
+  --text:#e8ecf4;--text2:#8a95aa;--text3:#5a6478;
+  --accent:#3d7fff;--accent2:#2563eb;
+  --green:#22c55e;--red:#ef4444;--gold:#f59e0b;
+  --purple:#a78bfa;--teal:#14b8a6;--orange:#f97316;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+.mono{font-family:'DM Mono',monospace}
+
+/* SHELL */
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:224px;min-width:224px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;z-index:10}
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.topbar{height:54px;min-height:54px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;justify-content:space-between;gap:12px}
+.content{flex:1;overflow-y:auto;padding:20px;background:var(--bg)}
+
+/* SIDEBAR */
+.logo{padding:18px 16px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.logo-mark{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.logo-text{font-size:14px;font-weight:700;letter-spacing:-.3px}
+.logo-sub{font-size:9px;color:var(--text3);letter-spacing:.8px;text-transform:uppercase}
+.nav-group{padding:14px 10px 2px;font-size:9px;font-weight:700;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 12px;margin:1px 6px;border-radius:6px;cursor:pointer;font-size:12.5px;color:var(--text2);transition:all .12s;border:none;background:none;width:calc(100% - 12px);text-align:left;font-family:'DM Sans',sans-serif}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent);color:#fff}
+.nav-icon{width:14px;height:14px;flex-shrink:0;opacity:.8}
+.nav-badge{margin-left:auto;font-size:9px;padding:2px 5px;border-radius:8px;font-family:'DM Mono',monospace;font-weight:600}
+.nb-gold{background:#1a0e00;color:var(--gold)}
+.nb-red{background:#1f0505;color:var(--red)}
+.nb-green{background:#052010;color:var(--green)}
+.nb-blue{background:#03143d;color:#60a5fa}
+.sidebar-footer{margin-top:auto;padding:12px;border-top:1px solid var(--border);flex-shrink:0}
+.firm-pill{background:var(--bg3);border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.firm-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3d7fff,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+/* TOPBAR */
+.tb-left{display:flex;align-items:center;gap:10px;min-width:0}
+.tb-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.tb-btn{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;color:var(--text2);cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all .12s}
+.tb-btn:hover{border-color:var(--border2);color:var(--text)}
+.live-pill{display:flex;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:11px;color:var(--text2)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* PAGES */
+.page{display:none;animation:fadeIn .25s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* KPI GRID */
+.kpi-grid{display:grid;gap:12px;margin-bottom:18px}
+.kpi-5{grid-template-columns:repeat(5,1fr)}
+.kpi-4{grid-template-columns:repeat(4,1fr)}
+.kpi-6{grid-template-columns:repeat(6,1fr)}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi-label{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.4px;margin-bottom:5px;text-transform:uppercase}
+.kpi-val{font-size:22px;font-weight:700;line-height:1.1;margin-bottom:4px}
+.kpi-sub{font-size:11px;color:var(--text3)}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:14px}
+.card-hd{padding:13px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.card-title{font-size:13px;font-weight:600}
+.card-body{padding:16px}
+.card-body-flush{padding:0}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700}
+.chip-up{background:#052010;color:var(--green)}
+.chip-dn{background:#1f0505;color:var(--red)}
+.chip-gold{background:#1a0e00;color:var(--gold)}
+.chip-blue{background:#03143d;color:#60a5fa}
+.chip-purple{background:#1a0a3d;color:var(--purple)}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+td.strong{color:var(--text);font-weight:500}
+tr:hover td{background:var(--bg3)}
+tr:last-child td{border-bottom:none}
+
+/* TABS */
+.tabs{display:flex;gap:2px;background:var(--bg3);border-radius:8px;padding:3px;margin-bottom:16px;width:fit-content;flex-wrap:wrap}
+.tab{padding:5px 13px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text3);transition:all .12s;border:none;background:none;font-family:'DM Sans',sans-serif;font-weight:500;white-space:nowrap}
+.tab.active{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.5)}
+
+/* LAYOUT */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+
+/* MISC */
+.section-label{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
+.prog{height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;border-radius:2px}
+.alert-row{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border-radius:7px;margin-bottom:6px;font-size:12px;line-height:1.5;border:1px solid}
+.alert-warn{background:#1a0e00;border-color:#3a2000}
+.alert-info{background:#03143d;border-color:#0a2a6a}
+.alert-good{background:#052010;border-color:#0a3820}
+.alert-crit{background:#1f0505;border-color:#4a0808}
+.rm-card{background:var(--bg3);border-radius:8px;padding:12px;text-align:center}
+.rm-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace}
+.rm-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-top:3px}
+.rm-bench{font-size:10px;color:var(--text3);margin-top:2px}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;background:var(--bg4);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);cursor:pointer}
+.run-btn{background:var(--accent);border:none;border-radius:6px;padding:6px 14px;color:#fff;font-size:12px;cursor:pointer;font-weight:600;font-family:'DM Sans',sans-serif}
+.run-btn:hover{background:var(--accent2)}
+.acct-chip{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:4px 8px;font-size:11px;cursor:pointer;color:var(--text2);white-space:nowrap}
+.acct-chip.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ATTR BARS */
+.attr-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.attr-label{font-size:11px;color:var(--text2);width:130px;flex-shrink:0}
+.attr-bar{flex:1;height:7px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.attr-fill{height:100%;border-radius:3px}
+.attr-val{font-size:11px;font-family:'DM Mono',monospace;width:55px;text-align:right}
+
+/* CORR */
+.corr-cell{width:36px;height:26px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:9px;font-family:'DM Mono',monospace}
+
+/* DRIFT */
+.drift-bar{height:5px;background:var(--bg4);border-radius:3px;position:relative}
+.drift-fill{height:100%;border-radius:3px;position:absolute;top:0;left:0}
+.drift-center{position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--text3)}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* LEGEND */
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* PERIOD TABS */
+.ptabs{display:flex;gap:2px}
+.ptab{background:none;border:none;color:var(--text3);font-size:10px;padding:3px 6px;border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.ptab.active{background:var(--bg4);color:var(--text)}
+
+/* GIPS */
+.gips-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px}
+.gips-key{color:var(--text3);flex:1}
+.gips-val{color:var(--text);font-family:'DM Mono',monospace;font-size:10px;margin:0 8px}
+.gips-pass{color:var(--green);font-size:9px;font-weight:700;background:#052010;padding:1px 5px;border-radius:3px}
+.gips-note{color:var(--gold);font-size:9px;font-weight:700;background:#1a0e00;padding:1px 5px;border-radius:3px}
+
+/* SPARKLINE canvas */
+.spark{display:block}
+
+/* MODEL CARD */
+.model-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:13px;margin-bottom:9px}
+
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">AX</div>
+    <div>
+      <div class="logo-text">Apex Wealth</div>
+      <div class="logo-sub">Institutional Platform</div>
+    </div>
+  </div>
+
+  <div class="nav-group">Dashboards</div>
+  <button class="nav-item active" data-page="overview">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" fill="currentColor"/><rect x="8" y="1" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="1" y="8" width="5" height="5" rx="1" fill="currentColor" opacity=".5"/><rect x="8" y="8" width="5" height="5" rx="1" fill="currentColor" opacity=".3"/></svg>
+    Overview
+    <span class="nav-badge nb-green">Live</span>
+  </button>
+  <button class="nav-item" data-page="accounts">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Accounts
+    <span class="nav-badge nb-blue">10</span>
+  </button>
+
+  <div class="nav-group">Analysis</div>
+  <button class="nav-item" data-page="performance">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><polyline points="1,11 4,7 7,8 10,4 13,5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Performance
+  </button>
+  <button class="nav-item" data-page="attribution">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="3" height="6" rx="1" fill="currentColor" opacity=".5"/><rect x="5.5" y="4" width="3" height="9" rx="1" fill="currentColor" opacity=".8"/><rect x="10" y="1" width="3" height="12" rx="1" fill="currentColor"/></svg>
+    Attribution
+  </button>
+  <button class="nav-item" data-page="risk">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M7 1L1 13h12L7 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M7 5.5v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="7" cy="10.5" r=".7" fill="currentColor"/></svg>
+    Risk Metrics
+  </button>
+  <button class="nav-item" data-page="montecarlo">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M1 11C2.5 9 3.5 7 5 8s2.5-2 4-4 2 1.5 4 0" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M1 11C2.5 10 4 9 5 9.5s2.5-1.5 4-2.5 2 1 4-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" opacity=".4"/></svg>
+    Monte Carlo
+  </button>
+  <button class="nav-item" data-page="whatif">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M1 7h3l1.5-5 3 10 2-5h2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    What-If
+  </button>
+
+  <div class="nav-group">Reporting</div>
+  <button class="nav-item" data-page="transactions">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M1 5h12M1 5l2.5-2.5M1 5l2.5 2.5M13 9H1M13 9l-2.5-2.5M13 9l-2.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Transactions
+  </button>
+  <button class="nav-item" data-page="flows">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><circle cx="3.5" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="10.5" cy="3.5" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="10.5" cy="10.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M5.5 6.2L8.5 4.5M5.5 7.8L8.5 9.5" stroke="currentColor" stroke-width="1.2"/></svg>
+    Capital Flows
+  </button>
+  <button class="nav-item" data-page="expenses">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="2.5" width="12" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 6v2M5.5 7h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+    Expense Analyzer
+  </button>
+
+  <div class="nav-group">Advanced</div>
+  <button class="nav-item" data-page="tax">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M2.5 1.5h9L10 6H4L2.5 1.5z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M4 6l1 6.5h4L10 6" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/></svg>
+    Tax Overlay
+    <span class="nav-badge nb-gold">3</span>
+  </button>
+  <button class="nav-item" data-page="manager">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="9" width="12" height="4" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="5" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.1"/><rect x="1" y="1" width="12" height="3" rx="1" stroke="currentColor" stroke-width="1.1"/></svg>
+    Manager DD
+    <span class="nav-badge nb-red">1</span>
+  </button>
+  <button class="nav-item" data-page="models">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="2" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M4 6h6M4 9h4" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+    Model Mgmt
+    <span class="nav-badge nb-gold">2</span>
+  </button>
+  <button class="nav-item" data-page="compliance">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><path d="M7 1L1.5 3.5v4.5C1.5 11 4 13 7 13s5.5-2 5.5-5V3.5L7 1z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/><path d="M4.5 7l2 2 3-3.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    Compliance &amp; GIPS
+    <span class="nav-badge nb-green">✓</span>
+  </button>
+  <button class="nav-item" data-page="portal">
+    <svg class="nav-icon" viewBox="0 0 14 14" fill="none"><rect x="1" y="1.5" width="12" height="11" rx="1.5" stroke="currentColor" stroke-width="1.1"/><path d="M1 5h12" stroke="currentColor" stroke-width="1.1"/><circle cx="3.5" cy="3.2" r=".7" fill="currentColor"/><circle cx="6" cy="3.2" r=".7" fill="currentColor"/></svg>
+    Client Portal
+  </button>
+
+  <div class="sidebar-footer">
+    <div class="firm-pill">
+      <div class="firm-av">AW</div>
+      <div>
+        <div style="font-size:12px;font-weight:600">Apex Wealth Mgmt</div>
+        <div style="font-size:9px;color:var(--text3)">$100.2B AUM · Fidelity · 10 Accts</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="live-pill"><div class="live-dot"></div><span id="pageTitle" style="font-weight:600">Overview</span></div>
+      <span style="font-size:11px;color:var(--text3)">Jan 1 – Mar 18, 2026 · Fidelity Institutional</span>
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <div class="acct-chip sel" onclick="filterAcct('ALL',this)">All</div>
+        <div class="acct-chip" onclick="filterAcct('FID-001',this)">001</div>
+        <div class="acct-chip" onclick="filterAcct('FID-002',this)">002</div>
+        <div class="acct-chip" onclick="filterAcct('FID-003',this)">003</div>
+        <div class="acct-chip" onclick="filterAcct('FID-004',this)">004</div>
+        <div class="acct-chip" onclick="filterAcct('FID-005',this)">005</div>
+      </div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-btn">📅 Mar 18, 2026</button>
+      <button class="tb-btn">⬇ Export</button>
+      <button class="tb-btn">⚙ Settings</button>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+
+<!-- ═══════════════════════════════════
+     OVERVIEW
+═══════════════════════════════════ -->
+<div class="page active" id="page-overview">
+  <div class="kpi-grid kpi-5">
+    <div class="kpi-card"><div class="kpi-label">Total AUM</div><div class="kpi-val">$100.2B</div><div class="kpi-sub"><span class="chip chip-up">+$4.1B</span> since inception</div></div>
+    <div class="kpi-card"><div class="kpi-label">ITD Return</div><div class="kpi-val" style="color:var(--green)">+4.26%</div><div class="kpi-sub"><span class="chip chip-dn">-0.32%</span> vs S&P 500</div></div>
+    <div class="kpi-card"><div class="kpi-label">Net Flows YTD</div><div class="kpi-val" style="color:var(--teal)">+$2.81B</div><div class="kpi-sub">In $3.42B · Out $0.61B</div></div>
+    <div class="kpi-card"><div class="kpi-label">Portfolio Sharpe</div><div class="kpi-val">1.42</div><div class="kpi-sub">Benchmark: 1.18</div></div>
+    <div class="kpi-card"><div class="kpi-label">Blended Expense</div><div class="kpi-val" style="color:var(--gold)">0.31%</div><div class="kpi-sub">Saved vs avg: $512M/yr</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd">
+        <span class="card-title">Portfolio vs Benchmarks (ITD)</span>
+        <div class="ptabs">
+          <button class="ptab active" onclick="setPeriod(this,'1m')">1M</button>
+          <button class="ptab" onclick="setPeriod(this,'3m')">3M</button>
+          <button class="ptab" onclick="setPeriod(this,'ytd')">YTD</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+          <span class="leg-item"><span class="leg-dot" style="background:#3d7fff"></span>Portfolio +4.26%</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#6b7280"></span>S&P 500 +4.58%</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#f59e0b"></span>60/40 +2.11%</span>
+        </div>
+        <div style="position:relative;height:190px"><canvas id="c-perf"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Asset Allocation</span><span style="font-size:11px;color:var(--text3)">10 accounts</span></div>
+      <div class="card-body" style="display:flex;gap:14px;align-items:center">
+        <div style="position:relative;width:130px;height:130px;flex-shrink:0"><canvas id="c-alloc"></canvas></div>
+        <div style="flex:1" id="alloc-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span class="card-title">Account Summary — All Fidelity Accounts</span></div>
+    <div class="card-body-flush">
+      <table>
+        <thead><tr><th>Account</th><th>Client</th><th>Model</th><th>AUM</th><th>ITD Ret</th><th>vs BM</th><th>Sharpe</th><th>Max DD</th><th>Trend</th><th>Status</th></tr></thead>
+        <tbody id="acct-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hd"><span class="card-title">Smart Alerts</span><span style="font-size:11px;color:var(--gold)">3 require attention</span></div>
+    <div class="card-body">
+      <div class="alert-row alert-warn">⚠️ <div><b style="color:var(--gold)">FID-007</b> — Drifted 4.2% from target allocation. Rebalance recommended immediately.</div></div>
+      <div class="alert-row alert-info">ℹ️ <div><b style="color:#60a5fa">FID-003</b> — Tax-loss harvesting opportunity: $8.4M estimated benefit available across 4 positions.</div></div>
+      <div class="alert-row alert-good">✅ <div><b style="color:var(--green)">FID-001</b> — Sharpe ratio 1.87 — top decile vs peer universe of 847 strategies.</div></div>
+      <div class="alert-row alert-warn">⚠️ <div><b style="color:var(--gold)">FID-009</b> — $42M cash inflow awaiting investment policy review and deployment.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     ACCOUNTS
+═══════════════════════════════════ -->
+<div class="page" id="page-accounts">
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px" id="acct-cards"></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     PERFORMANCE
+═══════════════════════════════════ -->
+<div class="page" id="page-performance">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('perf','ts',this)">Time Series</button>
+    <button class="tab" onclick="showTab('perf','trailing',this)">Trailing Returns</button>
+    <button class="tab" onclick="showTab('perf','calendar',this)">Calendar</button>
+    <button class="tab" onclick="showTab('perf','peer',this)">Peer Ranking</button>
+  </div>
+  <div id="perf-ts">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Cumulative Performance — Inception to Date</span></div>
+      <div class="card-body">
+        <div style="display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+          <span class="leg-item"><span class="leg-dot" style="background:#3d7fff"></span>Portfolio</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#6b7280"></span>S&P 500</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#f59e0b"></span>60/40 Blend</span>
+          <span class="leg-item"><span class="leg-dot" style="background:#14b8a6"></span>MSCI World</span>
+        </div>
+        <div style="position:relative;height:260px"><canvas id="c-perf-detail"></canvas></div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Daily Return Distribution</span></div>
+        <div class="card-body"><div style="position:relative;height:160px"><canvas id="c-retdist"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Rolling Performance Metrics</span></div>
+        <div class="card-body">
+          <table><thead><tr><th>Metric</th><th>1M</th><th>3M</th><th>ITD</th></tr></thead>
+          <tbody>
+            <tr><td class="strong">Total Return</td><td class="mono" style="color:var(--green)">+1.82%</td><td class="mono" style="color:var(--green)">+4.26%</td><td class="mono" style="color:var(--green)">+4.26%</td></tr>
+            <tr><td class="strong">vs S&P 500</td><td class="mono" style="color:var(--red)">-0.21%</td><td class="mono" style="color:var(--red)">-0.32%</td><td class="mono" style="color:var(--red)">-0.32%</td></tr>
+            <tr><td class="strong">Sharpe Ratio</td><td class="mono">1.62</td><td class="mono">1.45</td><td class="mono">1.42</td></tr>
+            <tr><td class="strong">Sortino</td><td class="mono">2.14</td><td class="mono">1.88</td><td class="mono">1.79</td></tr>
+            <tr><td class="strong">Max Drawdown</td><td class="mono" style="color:var(--red)">-1.2%</td><td class="mono" style="color:var(--red)">-2.4%</td><td class="mono" style="color:var(--red)">-2.4%</td></tr>
+            <tr><td class="strong">Ann. Volatility</td><td class="mono">8.4%</td><td class="mono">9.1%</td><td class="mono">9.1%</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="perf-trailing" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Trailing Returns vs Benchmarks</span></div>
+    <div class="card-body"><div style="position:relative;height:240px"><canvas id="c-trailing"></canvas></div></div></div>
+  </div>
+  <div id="perf-calendar" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Calendar Performance Heatmap</span></div>
+    <div class="card-body" id="calendar-grid"></div></div>
+  </div>
+  <div id="perf-peer" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Peer Universe Ranking — 847 Comparable Strategies</span></div>
+    <div class="card-body">
+      <div style="margin-bottom:10px;font-size:12px;color:var(--text2)">Portfolio ranks in the <span style="color:var(--green);font-weight:600">32nd percentile</span> (top third)</div>
+      <div style="position:relative;height:200px"><canvas id="c-peer"></canvas></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     ATTRIBUTION
+═══════════════════════════════════ -->
+<div class="page" id="page-attribution">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Brinson Attribution — ITD</span></div>
+      <div class="card-body">
+        <div class="section-label">Allocation Effect</div>
+        <div id="alloc-attr"></div>
+        <div class="section-label" style="margin-top:14px">Selection Effect</div>
+        <div id="sel-attr"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Factor Attribution</span></div>
+      <div class="card-body">
+        <div id="factor-attr"></div>
+        <div style="position:relative;height:155px;margin-top:14px"><canvas id="c-factor"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><span class="card-title">Sector Attribution Detail</span></div>
+    <div class="card-body-flush">
+      <table><thead><tr><th>Sector</th><th>Port Wt</th><th>BM Wt</th><th>Active Wt</th><th>Port Ret</th><th>BM Ret</th><th>Alloc</th><th>Select</th><th>Total</th></tr></thead>
+      <tbody id="sector-attr-table"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     RISK
+═══════════════════════════════════ -->
+<div class="page" id="page-risk">
+  <div class="kpi-grid kpi-6" id="risk-kpis"></div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><span class="card-title">Risk / Return Scatter</span></div>
+    <div class="card-body"><div style="position:relative;height:220px"><canvas id="c-riskret"></canvas></div></div></div>
+    <div class="card"><div class="card-hd"><span class="card-title">Drawdown Analysis</span></div>
+    <div class="card-body"><div style="position:relative;height:220px"><canvas id="c-dd"></canvas></div></div></div>
+  </div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><span class="card-title">Correlation Matrix</span></div>
+    <div class="card-body" id="corr-matrix"></div></div>
+    <div class="card"><div class="card-hd"><span class="card-title">Value at Risk (95% / 99%)</span></div>
+    <div class="card-body"><div style="position:relative;height:180px"><canvas id="c-var"></canvas></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     MONTE CARLO
+═══════════════════════════════════ -->
+<div class="page" id="page-montecarlo">
+  <div class="card">
+    <div class="card-hd"><span class="card-title">Monte Carlo Simulation</span><span style="font-size:11px;color:var(--text3)">500 paths · Log-normal model</span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
+        <div><div class="section-label">Initial ($M)</div><input type="number" id="mc-init" value="100" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
+        <div><div class="section-label">Annual Return %</div><input type="number" id="mc-ret" value="7.5" step=".5" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
+        <div><div class="section-label">Volatility %</div><input type="number" id="mc-vol" value="9.1" step=".5" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
+        <div><div class="section-label">Years</div><input type="number" id="mc-years" value="10" min="1" max="40" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
+        <div style="display:flex;align-items:flex-end"><button class="run-btn" onclick="runMC()" style="width:100%">▶ Run</button></div>
+      </div>
+      <div style="position:relative;height:280px"><canvas id="c-mc"></canvas></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px" id="mc-stats"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     WHAT-IF
+═══════════════════════════════════ -->
+<div class="page" id="page-whatif">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Scenario Builder — Allocation Sliders</span></div>
+      <div class="card-body">
+        <div id="wi-sliders"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <span style="font-size:12px;color:var(--text2)">Total</span>
+          <span class="mono" id="wi-total" style="font-size:14px;font-weight:700;color:var(--green)">100%</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="run-btn" onclick="runWI()">▶ Analyze</button>
+          <button class="tb-btn" onclick="resetWI()">Reset</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Projected Outcome</span></div>
+      <div class="card-body">
+        <div style="position:relative;height:200px"><canvas id="c-wi"></canvas></div>
+        <div id="wi-impact" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd"><span class="card-title">Historical Stress Tests</span></div>
+    <div class="card-body"><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="stress-grid"></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     TRANSACTIONS
+═══════════════════════════════════ -->
+<div class="page" id="page-transactions">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('tx','all',this)">All</button>
+    <button class="tab" onclick="showTab('tx','buy',this)">Buys</button>
+    <button class="tab" onclick="showTab('tx','sell',this)">Sells</button>
+    <button class="tab" onclick="showTab('tx','div',this)">Dividends</button>
+    <button class="tab" onclick="showTab('tx','fee',this)">Fees</button>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-title">Transaction Ledger</span>
+      <div style="display:flex;gap:6px"><button class="tb-btn">📄 CSV</button><button class="tb-btn">📊 PDF</button><button class="tb-btn">🔗 Reconcile</button></div>
+    </div>
+    <div class="card-body-flush"><table><thead><tr><th>Date</th><th>Account</th><th>Type</th><th>Security</th><th>Shares</th><th>Price</th><th>Amount</th><th>Gain/Loss</th><th>Status</th></tr></thead>
+    <tbody id="tx-table"></tbody></table></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     CAPITAL FLOWS
+═══════════════════════════════════ -->
+<div class="page" id="page-flows">
+  <div class="kpi-grid kpi-4">
+    <div class="kpi-card"><div class="kpi-label">Gross Inflows</div><div class="kpi-val" style="color:var(--green)">$3.42B</div><div class="kpi-sub">YTD 2026</div></div>
+    <div class="kpi-card"><div class="kpi-label">Gross Outflows</div><div class="kpi-val" style="color:var(--red)">$0.61B</div><div class="kpi-sub">YTD 2026</div></div>
+    <div class="kpi-card"><div class="kpi-label">Net Flows</div><div class="kpi-val" style="color:var(--teal)">$2.81B</div><div class="kpi-sub">YTD 2026</div></div>
+    <div class="kpi-card"><div class="kpi-label">Organic Growth</div><div class="kpi-val">+2.9%</div><div class="kpi-sub">vs prior rate</div></div>
+  </div>
+  <div class="card"><div class="card-hd"><span class="card-title">Monthly Capital Flows</span></div>
+  <div class="card-body"><div style="position:relative;height:240px"><canvas id="c-flows"></canvas></div></div></div>
+  <div class="two-col">
+    <div class="card"><div class="card-hd"><span class="card-title">Net Flow by Account</span></div>
+    <div class="card-body"><div style="position:relative;height:200px"><canvas id="c-flowacct"></canvas></div></div></div>
+    <div class="card"><div class="card-hd"><span class="card-title">Flow Source</span></div>
+    <div class="card-body"><div style="position:relative;height:200px"><canvas id="c-flowsrc"></canvas></div></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     EXPENSES
+═══════════════════════════════════ -->
+<div class="page" id="page-expenses">
+  <div class="two-col">
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Blended Expense Ratio Analyzer</span></div>
+      <div class="card-body">
+        <div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">
+          <span style="flex:1">Fund / Strategy</span><span style="width:50px;text-align:right">Wt</span><span style="width:55px;text-align:right">ER</span><span style="width:65px;text-align:right">Wtd ER</span>
+        </div>
+        <div id="er-rows"></div>
+        <div style="margin-top:10px;padding:12px;background:var(--bg3);border-radius:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;font-weight:600">Blended Expense Ratio</span>
+            <span class="mono" id="blended-er" style="font-size:20px;font-weight:700;color:var(--gold)">0.310%</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text3)">
+            <span>vs Industry avg (0.82%)</span><span style="color:var(--green)">Savings: ~$512M/yr</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><span class="card-title">Fee Drag — 10-Year Projection</span></div>
+      <div class="card-body"><div style="position:relative;height:200px"><canvas id="c-er"></canvas></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:10px">At $100.2B AUM, each 0.10% = <span style="color:var(--gold);font-weight:600">$100.2M/yr</span> in client costs.</div></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-hd"><span class="card-title">Expense Ratio Comparison by Fund Type</span></div>
+  <div class="card-body"><div style="position:relative;height:180px"><canvas id="c-ercomp"></canvas></div></div></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     TAX OVERLAY
+═══════════════════════════════════ -->
+<div class="page" id="page-tax">
+  <div class="kpi-grid kpi-5">
+    <div class="kpi-card"><div class="kpi-label">TLH Available</div><div class="kpi-val" style="color:var(--gold)">$8.4M</div><div class="kpi-sub">Across 3 accounts</div></div>
+    <div class="kpi-card"><div class="kpi-label">Realized Gains YTD</div><div class="kpi-val" style="color:var(--green)">$14.2M</div><div class="kpi-sub">LT $9.8M · ST $4.4M</div></div>
+    <div class="kpi-card"><div class="kpi-label">Unrealized Gains</div><div class="kpi-val">$31.6M</div><div class="kpi-sub">Embedded in portfolio</div></div>
+    <div class="kpi-card"><div class="kpi-label">Wash Sales Monitored</div><div class="kpi-val" style="color:var(--teal)">847</div><div class="kpi-sub">0 violations detected</div></div>
+    <div class="kpi-card"><div class="kpi-label">Tax Alpha</div><div class="kpi-val" style="color:var(--purple)">+0.42%</div><div class="kpi-sub">vs non-tax-aware</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('tax','tlh',this)">TLH Opportunities</button>
+    <button class="tab" onclick="showTab('tax','gl',this)">Gain/Loss Ledger</button>
+    <button class="tab" onclick="showTab('tax','wash',this)">Wash Sale Monitor</button>
+    <button class="tab" onclick="showTab('tax','proj',this)">Tax Projector</button>
+  </div>
+  <div id="tax-tlh">
+    <div class="card"><div class="card-hd"><span class="card-title">Tax-Loss Harvesting Opportunities</span><button class="run-btn" style="font-size:11px;padding:4px 12px">⚡ Auto-Harvest All</button></div>
+    <div class="card-body-flush"><table><thead><tr><th>Account</th><th>Security</th><th>Shares</th><th>Cost</th><th>Current</th><th>Unrealized Loss</th><th>Est. Tax Savings</th><th>Swap</th><th>Wash Risk</th><th></th></tr></thead>
+    <tbody id="tlh-table"></tbody></table></div></div>
+    <div class="two-col">
+      <div class="card"><div class="card-hd"><span class="card-title">TLH Captured by Month</span></div>
+      <div class="card-body"><div style="position:relative;height:180px"><canvas id="c-tlh"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Cumulative Tax Alpha</span></div>
+      <div class="card-body"><div style="position:relative;height:180px"><canvas id="c-taxalpha"></canvas></div></div></div>
+    </div>
+  </div>
+  <div id="tax-gl" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Gain/Loss Ledger</span><div style="display:flex;gap:6px"><button class="tb-btn">📄 Schedule D</button><button class="tb-btn">📊 Tax Package</button></div></div>
+    <div class="card-body-flush"><table><thead><tr><th>Account</th><th>Security</th><th>Opened</th><th>Closed</th><th>Term</th><th>Cost</th><th>Proceeds</th><th>G/L</th><th>Type</th></tr></thead>
+    <tbody id="gl-table"></tbody></table></div></div>
+  </div>
+  <div id="tax-wash" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Wash Sale Monitor — Real-Time</span><span class="chip chip-up">0 Violations</span></div>
+    <div class="card-body">
+      <div class="alert-row alert-good">✅ All 847 positions clear. 30-day pre/post windows tracked automatically across all 10 accounts.</div>
+      <div style="margin-top:12px"><div class="section-label">Upcoming Wash Windows</div>
+      <table><thead><tr><th>Account</th><th>Security Sold</th><th>Window Expires</th><th>Restricted</th><th>Alert</th></tr></thead>
+      <tbody><tr><td class="mono">FID-007</td><td>BOND ETF</td><td class="mono" style="color:var(--gold)">Mar 29, 2026</td><td style="color:var(--gold)">BND, TLT, AGG, SCHZ</td><td><span class="chip chip-gold">⏰ 11 days</span></td></tr></tbody></table></div>
+    </div></div>
+  </div>
+  <div id="tax-proj" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Tax Liability Projector</span></div>
+    <div class="card-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+        <div><div class="section-label">Fed LT Rate %</div><input type="range" min="0" max="40" value="23.8" step=".1" id="tp-lt" oninput="updateTP()"><div class="mono" id="tp-lt-v" style="font-size:12px;margin-top:4px">23.8%</div></div>
+        <div><div class="section-label">Fed ST Rate %</div><input type="range" min="0" max="50" value="37" step=".5" id="tp-st" oninput="updateTP()"><div class="mono" id="tp-st-v" style="font-size:12px;margin-top:4px">37.0%</div></div>
+        <div><div class="section-label">State Rate %</div><input type="range" min="0" max="15" value="9.3" step=".1" id="tp-state" oninput="updateTP()"><div class="mono" id="tp-state-v" style="font-size:12px;margin-top:4px">9.3%</div></div>
+        <div><div class="section-label">NIIT %</div><input type="range" min="0" max="5" value="3.8" step=".1" id="tp-niit" oninput="updateTP()"><div class="mono" id="tp-niit-v" style="font-size:12px;margin-top:4px">3.8%</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px" id="tp-kpis"></div>
+      <div style="position:relative;height:200px"><canvas id="c-tp"></canvas></div>
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     MANAGER DD
+═══════════════════════════════════ -->
+<div class="page" id="page-manager">
+  <div class="kpi-grid kpi-4">
+    <div class="kpi-card"><div class="kpi-label">Managers Monitored</div><div class="kpi-val">14</div><div class="kpi-sub">Across all strategies</div></div>
+    <div class="kpi-card"><div class="kpi-label">On Watch</div><div class="kpi-val" style="color:var(--red)">1</div><div class="kpi-sub">Quant review triggered</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg Score</div><div class="kpi-val" style="color:var(--green)">78/100</div><div class="kpi-sub">Threshold: 65</div></div>
+    <div class="kpi-card"><div class="kpi-label">Next Review</div><div class="kpi-val">Apr 1</div><div class="kpi-sub">Quarterly cycle</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('mgr','cards',this)">Scorecard</button>
+    <button class="tab" onclick="showTab('mgr','quant',this)">Quantitative</button>
+    <button class="tab" onclick="showTab('mgr','watch',this)">Watch List</button>
+    <button class="tab" onclick="showTab('mgr','search',this)">Universe Search</button>
+  </div>
+  <div id="mgr-cards"><div id="mgr-card-list"></div></div>
+  <div id="mgr-quant" style="display:none">
+    <div class="two-col">
+      <div class="card"><div class="card-hd"><span class="card-title">Information Ratio</span></div>
+      <div class="card-body"><div style="position:relative;height:200px"><canvas id="c-ir"></canvas></div></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">Up/Down Capture Ratio</span></div>
+      <div class="card-body"><div style="position:relative;height:200px"><canvas id="c-capture"></canvas></div></div></div>
+    </div>
+  </div>
+  <div id="mgr-watch" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Watch List</span><span class="chip chip-dn">1 Active</span></div>
+    <div class="card-body">
+      <div class="alert-row alert-crit">🚨 <div><b style="color:var(--red)">Meridian Capital Growth</b> — On watch Feb 14. PM departure + 3-quarter performance lag. Score dropped 74→58. Review Apr 1.</div></div>
+      <table style="margin-top:12px"><thead><tr><th>Manager</th><th>Strategy</th><th>On Watch</th><th>Reason</th><th>Score</th><th>Review</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr><td class="strong" style="color:var(--red)">Meridian Capital</td><td>US Lg Growth</td><td class="mono">Feb 14</td><td>PM Departure</td><td class="mono" style="color:var(--red)">58/100</td><td class="mono">Apr 1</td><td><span class="chip chip-dn">Potential Term.</span></td></tr>
+        <tr><td class="strong" style="color:var(--gold)">Altus Fixed Inc.</td><td>Core Bond</td><td class="mono">Jan 22</td><td>Duration Drift</td><td class="mono" style="color:var(--gold)">67/100</td><td class="mono">Apr 15</td><td><span class="chip chip-gold">Monitor</span></td></tr>
+      </tbody></table>
+    </div></div>
+  </div>
+  <div id="mgr-search" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Manager Universe Search</span><span style="font-size:11px;color:var(--text3)">eVestment + Morningstar</span></div>
+    <div class="card-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif"><option>All Asset Classes</option><option>US Equity</option><option>International</option><option>Fixed Income</option><option>Alternatives</option></select>
+        <select style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--text);font-size:12px;font-family:'DM Sans',sans-serif"><option>Sharpe ≥ 1.0</option><option>≥ 0.8</option><option>≥ 1.2</option></select>
+        <button class="run-btn">🔍 Search</button>
+      </div>
+      <table><thead><tr><th>Manager</th><th>Strategy</th><th>AUM</th><th>Alpha</th><th>Sharpe</th><th>IR</th><th>Max DD</th><th>Score</th><th></th></tr></thead>
+      <tbody id="mgr-search-table"></tbody></table>
+    </div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     MODEL MANAGEMENT
+═══════════════════════════════════ -->
+<div class="page" id="page-models">
+  <div class="kpi-grid kpi-4">
+    <div class="kpi-card"><div class="kpi-label">Active Models</div><div class="kpi-val">8</div><div class="kpi-sub">4 risk profiles</div></div>
+    <div class="kpi-card"><div class="kpi-label">In Drift</div><div class="kpi-val" style="color:var(--gold)">2</div><div class="kpi-sub">FID-007, FID-005</div></div>
+    <div class="kpi-card"><div class="kpi-label">Avg Tracking Error</div><div class="kpi-val">1.8%</div><div class="kpi-sub">vs target models</div></div>
+    <div class="kpi-card"><div class="kpi-label">Last Rebalance</div><div class="kpi-val">Feb 14</div><div class="kpi-sub">7 accounts updated</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('mod','lib',this)">Library</button>
+    <button class="tab" onclick="showTab('mod','drift',this)">Drift Monitor</button>
+    <button class="tab" onclick="showTab('mod','rebal',this)">Rebalance Engine</button>
+    <button class="tab" onclick="showTab('mod','props',this)">Trade Proposals</button>
+  </div>
+  <div id="mod-lib"><div id="model-cards"></div></div>
+  <div id="mod-drift" style="display:none"><div id="drift-monitor"></div></div>
+  <div id="mod-rebal" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Rebalance Trade List</span><button class="run-btn" style="font-size:11px;padding:4px 12px">▶ Generate</button></div>
+    <div class="card-body-flush"><table><thead><tr><th>Account</th><th>Security</th><th>Current</th><th>Target</th><th>Deviation</th><th>Action</th><th>Est. Value</th><th>Tax Impact</th><th>Priority</th></tr></thead>
+    <tbody id="rebal-table"></tbody></table></div></div>
+  </div>
+  <div id="mod-props" style="display:none">
+    <div class="card"><div class="card-hd"><span class="card-title">Pending Trade Proposals</span><span class="chip chip-gold">4 Awaiting Approval</span></div>
+    <div class="card-body-flush"><table><thead><tr><th>Proposal</th><th>Account</th><th>Type</th><th>Description</th><th>Cost</th><th>Initiated</th><th>Approver</th><th>Status</th></tr></thead>
+    <tbody id="prop-table"></tbody></table></div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     COMPLIANCE & GIPS
+═══════════════════════════════════ -->
+<div class="page" id="page-compliance">
+  <div class="kpi-grid kpi-4">
+    <div class="kpi-card"><div class="kpi-label">GIPS Status</div><div class="kpi-val" style="color:var(--green)">Compliant</div><div class="kpi-sub">Verified Mar 1, 2026</div></div>
+    <div class="kpi-card"><div class="kpi-label">Composites</div><div class="kpi-val">6</div><div class="kpi-sub">All presenting since inception</div></div>
+    <div class="kpi-card"><div class="kpi-label">Rules Passing</div><div class="kpi-val" style="color:var(--green)">9/10</div><div class="kpi-sub">1 drift alert</div></div>
+    <div class="kpi-card"><div class="kpi-label">Verifier</div><div class="kpi-val" style="font-size:15px">ACA Group</div><div class="kpi-sub">Annual cycle</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('comp','gips',this)">GIPS Report</button>
+    <button class="tab" onclick="showTab('comp','rules',this)">Rule Monitor</button>
+    <button class="tab" onclick="showTab('comp','ips',this)">IPS Adherence</button>
+    <button class="tab" onclick="showTab('comp','audit',this)">Audit Trail</button>
+  </div>
+  <div id="comp-gips">
+    <div class="two-col">
+      <div class="card"><div class="card-hd"><span class="card-title">GIPS Composite — Balanced Growth</span><button class="tb-btn">📄 Export</button></div>
+      <div class="card-body" id="gips-report"></div></div>
+      <div class="card"><div class="card-hd"><span class="card-title">GIPS Checklist</span></div>
+      <div class="card-body" id="gips-checklist"></div></div>
+    </div>
+  </div>
+  <div id="comp-rules" style="display:none"><div class="card"><div class="card-hd"><span class="card-title">Automated Rule Monitoring</span></div><div class="card-body" id="rules-body"></div></div></div>
+  <div id="comp-ips" style="display:none"><div class="card"><div class="card-hd"><span class="card-title">IPS Adherence</span></div><div class="card-body-flush"><table><thead><tr><th>Account</th><th>Constraint</th><th>Limit</th><th>Current</th><th>Headroom</th><th>Status</th></tr></thead><tbody id="ips-table"></tbody></table></div></div></div>
+  <div id="comp-audit" style="display:none"><div class="card"><div class="card-hd"><span class="card-title">Immutable Audit Trail</span><span style="font-size:11px;color:var(--text3)">SHA-256 signed · All actions logged</span></div><div class="card-body-flush"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Account</th><th>Detail</th><th>IP</th><th>Hash</th></tr></thead><tbody id="audit-table"></tbody></table></div></div></div>
+</div>
+
+<!-- ═══════════════════════════════════
+     CLIENT PORTAL
+═══════════════════════════════════ -->
+<div class="page" id="page-portal">
+  <div class="card"><div class="card-hd"><span class="card-title">Client Portal — Embedded View</span><span class="chip chip-up">Live</span></div>
+  <div class="card-body">
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:12px;font-size:12px;color:var(--text2)">
+      Portal URL (white-labeled): <span class="mono" style="color:var(--accent)">https://portal.apexwealth.com/client/{account-id}</span>
+    </div>
+    <div style="background:linear-gradient(135deg,#0f1e3d,#0a1628);border-radius:12px;padding:24px;border:1px solid var(--border2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+        <div><div style="font-size:20px;font-weight:700">Welcome, James Thornton</div><div style="font-size:12px;color:var(--text3)">FID-001 · Fidelity · Last login: Today 9:14 AM</div></div>
+        <button class="run-btn">📥 Statement</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:14px"><div class="kpi-label">Portfolio Value</div><div class="kpi-val">$14.2M</div><div style="font-size:11px;color:var(--green)">+$580K since inception</div></div>
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:14px"><div class="kpi-label">Total Return</div><div class="kpi-val" style="color:var(--green)">+4.26%</div><div style="font-size:11px;color:var(--text3)">Since Jan 1, 2026</div></div>
+        <div style="background:rgba(255,255,255,.06);border-radius:8px;padding:14px"><div class="kpi-label">YTD Income</div><div class="kpi-val" style="color:var(--gold)">$48,200</div><div style="font-size:11px;color:var(--text3)">Dividends + Interest</div></div>
+      </div>
+      <div style="background:rgba(255,255,255,.04);border-radius:8px;padding:14px;font-size:12px">
+        <div style="font-weight:600;margin-bottom:8px">Recent Activity</div>
+        <div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between"><span>Q1 statement available</span><span style="color:var(--text3)">Mar 1</span></div>
+        <div style="padding:5px 0;border-bottom:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between"><span>Rebalance completed — Equity +2%</span><span style="color:var(--text3)">Feb 14</span></div>
+        <div style="padding:5px 0;display:flex;justify-content:space-between"><span>Dividend received — FXAIX $1,240</span><span style="color:var(--text3)">Feb 1</span></div>
+      </div>
+    </div>
+  </div></div>
+</div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// ═══ DATA ═══
+// ═══════════════════════════════════════════════════
+//  APEX WEALTH — DUMMY DATA LAYER
+//  All Fidelity accounts · Inception Jan 1, 2026
+// ═══════════════════════════════════════════════════
+
+const DATA = {};
+
+// ─── ACCOUNTS ───────────────────────────────────────
+DATA.accounts = [
+  { id:'FID-001', name:'James Thornton',        model:'Balanced Growth',       aum:14.2, ret:4.26, vsBM:-.32, sharpe:1.87, maxDD:-2.1, status:'Active'     },
+  { id:'FID-002', name:'Eleanor & Mark Voss',   model:'Conservative Income',   aum:9.8,  ret:2.94, vsBM:.83,  sharpe:1.22, maxDD:-1.2, status:'Active'     },
+  { id:'FID-003', name:'Hartwell Family Trust', model:'Aggressive Growth',     aum:22.4, ret:5.81, vsBM:1.23, sharpe:1.31, maxDD:-3.8, status:'Active'     },
+  { id:'FID-004', name:'Dr. Priya Nair',        model:'ESG Balanced',          aum:6.1,  ret:3.98, vsBM:-.60, sharpe:1.44, maxDD:-1.9, status:'Active'     },
+  { id:'FID-005', name:'Pacific Rim Corp 401k', model:'Target Date 2040',      aum:18.7, ret:4.44, vsBM:-.14, sharpe:1.39, maxDD:-2.6, status:'Active'     },
+  { id:'FID-006', name:'Morrison Foundation',   model:'Endowment Model',       aum:8.3,  ret:3.62, vsBM:-.96, sharpe:1.18, maxDD:-1.7, status:'Active'     },
+  { id:'FID-007', name:'Chen Dynasty Trust',    model:'Balanced Growth',       aum:7.6,  ret:4.01, vsBM:-.57, sharpe:1.28, maxDD:-2.3, status:'Drift Alert'},
+  { id:'FID-008', name:'Westgate Capital LLC',  model:'Alternatives Heavy',    aum:5.4,  ret:5.12, vsBM:.54,  sharpe:1.56, maxDD:-3.1, status:'Active'     },
+  { id:'FID-009', name:'Nguyen Family Office',  model:'Ultra HNW Custom',      aum:4.9,  ret:4.88, vsBM:.30,  sharpe:1.61, maxDD:-2.0, status:'Cash Hold'  },
+  { id:'FID-010', name:'Silverton Pension',     model:'LDI Strategy',          aum:2.8,  ret:2.21, vsBM:1.11, sharpe:0.98, maxDD:-0.8, status:'Active'     },
+];
+
+// ─── RETURN SERIES (77 trading days Jan 1 → Mar 18 2026) ──
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return ((s >>> 0) / 0xffffffff);
+  };
+}
+function genSeries(n, mu, sigma, seed, endVal) {
+  const rng = seededRand(seed);
+  let v = 100; const vals = [v];
+  for (let i = 1; i < n; i++) {
+    const u1 = Math.max(rng(), 1e-9), u2 = rng();
+    const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    v *= (1 + mu / 252 + sigma / Math.sqrt(252) * z);
+    vals.push(v);
+  }
+  const scale = endVal / vals[vals.length - 1];
+  return vals.map(v => +(v * scale).toFixed(4));
+}
+const N = 77;
+DATA.dates = Array.from({ length: N }, (_, i) => {
+  const d = new Date('2026-01-01'); d.setDate(d.getDate() + i);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+});
+DATA.series = {
+  port:  genSeries(N, .075, .091, 42,  104.26),
+  sp500: genSeries(N, .079, .138, 17,  104.58),
+  blend: genSeries(N, .048, .072, 99,  102.11),
+  msci:  genSeries(N, .068, .115, 55,  103.44),
+};
+
+// ─── ALLOCATION ──────────────────────────────────────
+DATA.allocation = {
+  labels: ['US Equity','Int\'l Equity','Fixed Income','Alternatives','Real Estate','Cash','Commodities','Other'],
+  values: [32, 18, 15, 12, 8, 6, 5, 4],
+  colors: ['#3d7fff','#a78bfa','#14b8a6','#f59e0b','#22c55e','#6b7280','#f97316','#ec4899'],
+};
+
+// ─── TRANSACTIONS ────────────────────────────────────
+DATA.transactions = [
+  { date:'Mar 18', acct:'FID-001', type:'Buy',  sec:'FXAIX',   shares:1240,  price:185.42, amount:-229921, gl:'',        status:'Settled' },
+  { date:'Mar 17', acct:'FID-003', type:'Sell', sec:'AAPL',    shares:500,   price:231.10, amount:115550,  gl:'+$14,200',status:'Settled' },
+  { date:'Mar 15', acct:'FID-005', type:'Div',  sec:'FTBFX',   shares:'-',   price:'-',    amount:48240,   gl:'',        status:'Posted'  },
+  { date:'Mar 14', acct:'FID-002', type:'Buy',  sec:'FBIIX',   shares:8200,  price:11.24,  amount:-92168,  gl:'',        status:'Settled' },
+  { date:'Mar 12', acct:'FID-007', type:'Sell', sec:'MSFT',    shares:300,   price:415.80, amount:124740,  gl:'+$22,100',status:'Settled' },
+  { date:'Mar 10', acct:'FID-004', type:'Buy',  sec:'VSGX',    shares:2100,  price:54.22,  amount:-113862, gl:'',        status:'Settled' },
+  { date:'Mar 8',  acct:'FID-001', type:'Fee',  sec:'Mgmt Fee',shares:'-',   price:'-',    amount:-35500,  gl:'',        status:'Posted'  },
+  { date:'Mar 5',  acct:'FID-009', type:'Buy',  sec:'BLV',     shares:1800,  price:78.34,  amount:-141012, gl:'',        status:'Settled' },
+  { date:'Mar 3',  acct:'FID-003', type:'Sell', sec:'NVDA',    shares:200,   price:884.00, amount:176800,  gl:'+$61,400',status:'Settled' },
+  { date:'Feb 28', acct:'FID-006', type:'Div',  sec:'FXAIX',   shares:'-',   price:'-',    amount:12840,   gl:'',        status:'Posted'  },
+  { date:'Feb 20', acct:'FID-005', type:'Sell', sec:'TLT',     shares:900,   price:66.00,  amount:59400,   gl:'-$2,700', status:'Settled' },
+  { date:'Feb 14', acct:'FID-007', type:'Buy',  sec:'AGG',     shares:3200,  price:97.50,  amount:-312000, gl:'',        status:'Settled' },
+];
+
+// ─── TLH OPPORTUNITIES ──────────────────────────────
+DATA.tlh = [
+  { acct:'FID-007', sec:'MSFT',    shares:800,  cost:421.20, curr:398.40, loss:-18624, savings:4438, swap:'GOOG',  wash:'Clear'   },
+  { acct:'FID-003', sec:'NVDA',    shares:300,  cost:920.00, curr:884.20, loss:-10740, savings:2557, swap:'AMD',   wash:'Clear'   },
+  { acct:'FID-001', sec:'AMZN',    shares:120,  cost:198.40, curr:182.10, loss:-1956,  savings:466,  swap:'META',  wash:'Clear'   },
+  { acct:'FID-005', sec:'BOND ETF',shares:4200, cost:72.40,  curr:70.80,  loss:-6720,  savings:1601, swap:'AGG',   wash:'14 days' },
+];
+
+// ─── GAIN / LOSS LEDGER ─────────────────────────────
+DATA.gl = [
+  { acct:'FID-003', sec:'AAPL', open:'Jan 1', close:'Mar 17', cost:110250, proc:124740, gl:14490,  type:'Long-Term'  },
+  { acct:'FID-003', sec:'NVDA', open:'Jan 1', close:'Mar 3',  cost:115400, proc:176800, gl:61400,  type:'Long-Term'  },
+  { acct:'FID-007', sec:'MSFT', open:'Jan 1', close:'Mar 12', cost:102540, proc:124740, gl:22200,  type:'Long-Term'  },
+  { acct:'FID-001', sec:'GOOG', open:'Feb 2', close:'Mar 5',  cost:48200,  proc:51400,  gl:3200,   type:'Short-Term' },
+  { acct:'FID-005', sec:'TLT',  open:'Jan 1', close:'Feb 20', cost:62100,  proc:59400,  gl:-2700,  type:'Short-Term' },
+];
+
+// ─── MANAGERS ───────────────────────────────────────
+DATA.managers = [
+  { name:'Fidelity Contrafund',    strategy:'US Large Blend',    aum:'$147B', score:88, ret:4.9, alpha:0.82, sharpe:1.54, status:'Active', color:'#3d7fff' },
+  { name:'Vanguard Wellington',    strategy:'Balanced',          aum:'$112B', score:91, ret:3.6, alpha:0.44, sharpe:1.28, status:'Active', color:'#22c55e' },
+  { name:'PIMCO Total Return',     strategy:'Core Plus Fixed',   aum:'$68B',  score:79, ret:2.8, alpha:0.68, sharpe:1.12, status:'Active', color:'#14b8a6' },
+  { name:'Meridian Capital Growth',strategy:'US Large Growth',   aum:'$12B',  score:58, ret:3.1, alpha:-.42, sharpe:0.92, status:'Watch',  color:'#ef4444' },
+  { name:'BlackRock Alternatives', strategy:'Multi-Alternative', aum:'$44B',  score:82, ret:5.4, alpha:1.12, sharpe:1.56, status:'Active', color:'#a78bfa' },
+];
+
+// ─── MODELS ─────────────────────────────────────────
+DATA.models = [
+  { name:'Balanced Growth',     accts:['FID-001','FID-007'], eq:60, fi:30, alt:10, te:1.6, drift:false },
+  { name:'Conservative Income', accts:['FID-002'],           eq:35, fi:55, alt:10, te:0.9, drift:false },
+  { name:'Aggressive Growth',   accts:['FID-003'],           eq:80, fi:10, alt:10, te:2.4, drift:false },
+  { name:'ESG Balanced',        accts:['FID-004'],           eq:55, fi:35, alt:10, te:1.2, drift:false },
+  { name:'Target Date 2040',    accts:['FID-005'],           eq:68, fi:22, alt:10, te:1.8, drift:true  },
+  { name:'Endowment Model',     accts:['FID-006'],           eq:50, fi:20, alt:30, te:2.1, drift:false },
+  { name:'Ultra HNW Custom',    accts:['FID-009'],           eq:45, fi:25, alt:30, te:1.4, drift:false },
+  { name:'LDI Strategy',        accts:['FID-010'],           eq:20, fi:70, alt:10, te:0.6, drift:false },
+];
+
+// ─── DRIFT DATA ─────────────────────────────────────
+DATA.drift = [
+  { id:'FID-001', name:'Thornton',     model:'Balanced Growth',   eq:61.2, eqT:60, fi:29.4, fiT:30, alt:9.4,  altT:10 },
+  { id:'FID-005', name:'Pacific Rim',  model:'Target Date 2040',  eq:72.4, eqT:68, fi:19.2, fiT:22, alt:8.4,  altT:10 },
+  { id:'FID-007', name:'Chen Trust',   model:'Balanced Growth',   eq:64.2, eqT:60, fi:26.8, fiT:30, alt:9.0,  altT:10 },
+  { id:'FID-002', name:'Voss',         model:'Conservative Inc.', eq:35.8, eqT:35, fi:54.2, fiT:55, alt:10.0, altT:10 },
+  { id:'FID-003', name:'Hartwell',     model:'Aggressive Growth', eq:81.0, eqT:80, fi:9.5,  fiT:10, alt:9.5,  altT:10 },
+];
+
+// ─── REBALANCE TRADES ───────────────────────────────
+DATA.rebal = [
+  { acct:'FID-007', sec:'US Equity ETF', curr:'64.2%', tgt:'60.0%', dev:'+4.2%', action:'SELL', val:'$156,000', tax:'$12,400', pri:'High'   },
+  { acct:'FID-007', sec:'Core Bond ETF', curr:'26.8%', tgt:'30.0%', dev:'-3.2%', action:'BUY',  val:'$98,400',  tax:'None',    pri:'High'   },
+  { acct:'FID-005', sec:'Equity Index',  curr:'72.4%', tgt:'68.0%', dev:'+4.4%', action:'SELL', val:'$388,000', tax:'$28,200', pri:'High'   },
+  { acct:'FID-005', sec:'Fixed Income',  curr:'19.2%', tgt:'22.0%', dev:'-2.8%', action:'BUY',  val:'$278,200', tax:'None',    pri:'Medium' },
+  { acct:'FID-001', sec:'Alt Sleeve',    curr:'9.4%',  tgt:'10.0%', dev:'-0.6%', action:'BUY',  val:'$22,400',  tax:'None',    pri:'Low'    },
+];
+
+// ─── PROPOSALS ──────────────────────────────────────
+DATA.proposals = [
+  { id:'TRD-2026-041', acct:'FID-007', type:'Rebalance', desc:'Reduce US Equity 4.2%, Buy Core Bond', cost:'$12,400 tax', init:'Mar 17', approver:'J. Chen',    status:'Pending'  },
+  { id:'TRD-2026-040', acct:'FID-005', type:'Rebalance', desc:'Trim Equity, Add Fixed Income',        cost:'$28,200 tax', init:'Mar 17', approver:'B. Kwon',    status:'Pending'  },
+  { id:'TRD-2026-039', acct:'FID-003', type:'TLH',       desc:'Harvest MSFT loss → swap GOOG',        cost:'$4,438 save', init:'Mar 16', approver:'R. Hartwell',status:'Approved' },
+  { id:'TRD-2026-038', acct:'FID-009', type:'Onboard',   desc:'Deploy $42M cash per IPS',             cost:'$0',          init:'Mar 15', approver:'T. Nguyen',  status:'Pending'  },
+];
+
+// ─── EXPENSE RATIOS ──────────────────────────────────
+DATA.expenses = [
+  { name:'Fidelity 500 Index (FXAIX)',   wt:32, er:0.015 },
+  { name:'Fidelity Total Bond (FTBFX)',  wt:18, er:0.450 },
+  { name:'Fidelity Int\'l Index (FSPSX)',wt:12, er:0.035 },
+  { name:'BlackRock Alt. (BLDSX)',       wt:8,  er:0.920 },
+  { name:'Fidelity RE (FRESX)',          wt:7,  er:0.740 },
+  { name:'iShares EM (EEM)',             wt:6,  er:0.700 },
+  { name:'Fidelity Small Cap (FSSNX)',   wt:5,  er:0.025 },
+  { name:'Cash / Money Market',          wt:4,  er:0.010 },
+  { name:'Vanguard Commodities (VPU)',   wt:4,  er:0.100 },
+  { name:'Other / Alternatives',         wt:4,  er:0.380 },
+];
+
+// ─── IPS ADHERENCE ───────────────────────────────────
+DATA.ips = [
+  { acct:'FID-001', constraint:'Max Equity',       limit:'70%',        curr:'61.2%',       room:'+8.8%',  ok:true  },
+  { acct:'FID-002', constraint:'Max Equity',       limit:'45%',        curr:'35.8%',       room:'+9.2%',  ok:true  },
+  { acct:'FID-003', constraint:'Max Single Stock', limit:'15%',        curr:'8.2%',        room:'+6.8%',  ok:true  },
+  { acct:'FID-004', constraint:'ESG Screen',       limit:'0 violations',curr:'0 violations',room:'N/A',   ok:true  },
+  { acct:'FID-005', constraint:'Max Equity Glide', limit:'72%',        curr:'72.4%',       room:'-0.4%',  ok:false },
+  { acct:'FID-007', constraint:'Equity Band ±5%',  limit:'60% ±5%',    curr:'64.2%',       room:'+0.8%',  ok:false },
+  { acct:'FID-009', constraint:'Max Alternatives', limit:'35%',        curr:'28.4%',       room:'+6.6%',  ok:true  },
+  { acct:'FID-010', constraint:'Min Hedge Ratio',  limit:'85% funded', curr:'91.2%',       room:'+6.2%',  ok:true  },
+];
+
+// ─── AUDIT TRAIL ─────────────────────────────────────
+DATA.audit = [
+  { ts:'Mar 18 09:14:22', user:'j.chen@apex.com',       action:'LOGIN',    acct:'ALL',     detail:'Session started — web UI',            ip:'198.51.100.42', hash:'SHA256-a3f9…' },
+  { ts:'Mar 18 09:16:05', user:'j.chen@apex.com',       action:'VIEW',     acct:'FID-007', detail:'Drift alert reviewed',                ip:'198.51.100.42', hash:'SHA256-b8e2…' },
+  { ts:'Mar 17 15:42:11', user:'s.park@apex.com',       action:'TRADE',    acct:'FID-003', detail:'AAPL sell 500sh — $115,550',          ip:'198.51.100.18', hash:'SHA256-c1d4…' },
+  { ts:'Mar 17 14:22:08', user:'m.torres@apex.com',     action:'REBALANCE',acct:'FID-007', detail:'Proposal TRD-2026-041 created',       ip:'198.51.100.74', hash:'SHA256-d7f1…' },
+  { ts:'Mar 15 11:05:44', user:'j.chen@apex.com',       action:'APPROVE',  acct:'FID-003', detail:'TLH harvest approved MSFT→GOOG',     ip:'198.51.100.42', hash:'SHA256-e9a3…' },
+  { ts:'Mar 14 16:30:00', user:'compliance@apex.com',   action:'REPORT',   acct:'ALL',     detail:'GIPS composite report generated',     ip:'198.51.100.1',  hash:'SHA256-f2b8…' },
+  { ts:'Mar 01 08:00:00', user:'system@apex.com',       action:'REBALANCE',acct:'ALL',     detail:'Monthly auto-check — 7 accts updated',ip:'10.0.0.1',      hash:'SHA256-g6c5…' },
+];
+
+// ─── WHAT-IF ASSETS ──────────────────────────────────
+DATA.wiAssets = [
+  { name:'US Large Cap',      val:32, base:32, ret:8.2,  vol:13.8, color:'#3d7fff' },
+  { name:'Int\'l Developed',  val:12, base:12, ret:6.8,  vol:14.2, color:'#a78bfa' },
+  { name:'Emerging Markets',  val:6,  base:6,  ret:9.4,  vol:18.4, color:'#14b8a6' },
+  { name:'US Fixed Income',   val:20, base:20, ret:4.1,  vol:5.2,  color:'#f59e0b' },
+  { name:'Alternatives',      val:12, base:12, ret:7.6,  vol:10.4, color:'#22c55e' },
+  { name:'Real Estate',       val:8,  base:8,  ret:6.2,  vol:11.6, color:'#f97316' },
+  { name:'Cash',              val:6,  base:6,  ret:4.8,  vol:0.2,  color:'#6b7280' },
+  { name:'Commodities',       val:4,  base:4,  ret:5.3,  vol:17.8, color:'#ec4899' },
+];
+
+// ─── MGR SEARCH UNIVERSE ────────────────────────────
+DATA.mgrSearch = [
+  { name:'T. Rowe Price Growth',    strat:'US Growth',   aum:'$84B', alpha:1.22, sharpe:1.48, ir:0.94, dd:-8.2,  score:86 },
+  { name:'Dodge & Cox Stock',       strat:'US Value',    aum:'$98B', alpha:0.88, sharpe:1.31, ir:0.72, dd:-11.4, score:82 },
+  { name:'Oakmark International',   strat:'Int\'l Value',aum:'$28B', alpha:1.44, sharpe:1.18, ir:1.02, dd:-14.2, score:84 },
+  { name:'Baird Core Plus Bond',    strat:'Core Plus',   aum:'$41B', alpha:0.72, sharpe:1.08, ir:0.66, dd:-4.8,  score:77 },
+  { name:'American Funds Growth',   strat:'Multi-Cap',   aum:'$210B',alpha:0.64, sharpe:1.24, ir:0.58, dd:-9.8,  score:79 },
+];
+
+
+// ═══ CHARTS ═══
+// ═══════════════════════════════════════════════════
+//  APEX WEALTH — CHART BUILDERS
+// ═══════════════════════════════════════════════════
+
+Chart.defaults.color = '#8a95aa';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+const CHARTS = {};
+
+function mkChart(id, config) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  if (el._chart) el._chart.destroy();
+  const ch = new Chart(el, config);
+  el._chart = ch;
+  return ch;
+}
+
+const gridOpts = { color: 'rgba(255,255,255,.045)' };
+const tooltipDefaults = { backgroundColor: '#1e2535', borderColor: '#2e3a52', borderWidth: 1, titleColor: '#e8ecf4', bodyColor: '#8a95aa' };
+const noLegend = { legend: { display: false } };
+
+// ─── PERFORMANCE LINE ────────────────────────────────
+CHARTS.buildPerf = function(id) {
+  const { dates, series } = DATA;
+  return mkChart(id, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [
+        { label: 'Portfolio', data: series.port,  borderColor: '#3d7fff', borderWidth: 2,   pointRadius: 0, fill: true, backgroundColor: 'rgba(61,127,255,.07)' },
+        { label: 'S&P 500',   data: series.sp500, borderColor: '#6b7280', borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [4,4] },
+        { label: '60/40',     data: series.blend, borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [2,4] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...noLegend, tooltip: { ...tooltipDefaults, mode: 'index', intersect: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 6, color: '#5a6478' }, grid: gridOpts },
+        y: { ticks: { color: '#5a6478', callback: v => v.toFixed(1) }, grid: gridOpts }
+      }
+    }
+  });
+};
+
+// ─── ALLOCATION DONUT ────────────────────────────────
+CHARTS.buildAlloc = function(id, legendId) {
+  const { labels, values, colors } = DATA.allocation;
+  mkChart(id, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderColor: '#0f1218', borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { ...noLegend, tooltip: { ...tooltipDefaults } }
+    }
+  });
+  if (legendId) {
+    const el = document.getElementById(legendId);
+    if (el) el.innerHTML = labels.map((l, i) =>
+      `<div class="leg-item" style="margin-bottom:5px">
+        <span class="leg-dot" style="background:${colors[i]}"></span>
+        <span>${l}</span>
+        <span class="mono" style="margin-left:auto;color:var(--text)">${values[i]}%</span>
+      </div>`
+    ).join('');
+  }
+};
+
+// ─── SPARKLINE ───────────────────────────────────────
+CHARTS.buildSparkline = function(id) {
+  const el = document.getElementById(id); if (!el) return;
+  const rng = seededRand(el.dataset.seed || 1);
+  let v = 0; const d = Array.from({ length: 20 }, () => { v += (rng() - 0.47) * 2; return v; });
+  new Chart(el, {
+    type: 'line',
+    data: { labels: d.map((_, i) => i), datasets: [{ data: d, borderColor: d[d.length-1] > d[0] ? '#22c55e' : '#ef4444', borderWidth: 1.5, pointRadius: 0, fill: false }] },
+    options: { responsive: false, animation: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } } }
+  });
+};
+
+// ─── PERF DETAIL ─────────────────────────────────────
+CHARTS.buildPerfDetail = function(id) {
+  const { dates, series } = DATA;
+  return mkChart(id, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [
+        { label: 'Portfolio',  data: series.port,  borderColor: '#3d7fff', borderWidth: 2.5, pointRadius: 0, fill: true, backgroundColor: 'rgba(61,127,255,.06)' },
+        { label: 'S&P 500',    data: series.sp500, borderColor: '#6b7280', borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [5,5] },
+        { label: '60/40 Blend',data: series.blend, borderColor: '#f59e0b', borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [3,5] },
+        { label: 'MSCI World', data: series.msci,  borderColor: '#14b8a6', borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [2,4] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } }, tooltip: { ...tooltipDefaults, mode: 'index', intersect: false } },
+      scales: { x: { ticks: { maxTicksLimit: 8, color: '#5a6478' }, grid: gridOpts }, y: { ticks: { color: '#5a6478', callback: v => v.toFixed(1) }, grid: gridOpts } }
+    }
+  });
+};
+
+// ─── RETURN DIST ─────────────────────────────────────
+CHARTS.buildRetDist = function(id) {
+  const diffs = DATA.series.port.slice(1).map((v, i) => (v / DATA.series.port[i] - 1) * 100);
+  const bins = [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2];
+  const hist = new Array(bins.length - 1).fill(0);
+  diffs.forEach(d => { for (let i = 0; i < bins.length - 1; i++) { if (d >= bins[i] && d < bins[i + 1]) hist[i]++; } });
+  mkChart(id, {
+    type: 'bar',
+    data: { labels: bins.slice(0, -1).map(b => b.toFixed(1) + '%'), datasets: [{ data: hist, backgroundColor: hist.map((_, i) => i < 3 ? 'rgba(239,68,68,.6)' : i > 5 ? 'rgba(34,197,94,.6)' : 'rgba(61,127,255,.5)'), borderWidth: 0, borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { ...noLegend }, scales: { x: { ticks: { color: '#5a6478' }, grid: gridOpts }, y: { ticks: { color: '#5a6478' }, grid: gridOpts } } }
+  });
+};
+
+// ─── TRAILING RETURNS ────────────────────────────────
+CHARTS.buildTrailing = function(id) {
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: ['1 Month', '3 Month', 'YTD'],
+      datasets: [
+        { label: 'Portfolio', data: [1.82, 2.84, 4.26], backgroundColor: 'rgba(61,127,255,.8)',  borderRadius: 4, borderWidth: 0 },
+        { label: 'S&P 500',   data: [2.03, 3.12, 4.58], backgroundColor: 'rgba(107,114,128,.6)', borderRadius: 4, borderWidth: 0 },
+        { label: '60/40',     data: [0.94, 1.55, 2.11], backgroundColor: 'rgba(245,158,11,.6)',  borderRadius: 4, borderWidth: 0 },
+        { label: 'MSCI World',data: [1.44, 2.21, 3.44], backgroundColor: 'rgba(20,184,166,.6)',  borderRadius: 4, borderWidth: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts } }
+    }
+  });
+};
+
+// ─── CALENDAR HEATMAP ────────────────────────────────
+CHARTS.buildCalendar = function(id) {
+  const el = document.getElementById(id); if (!el) return;
+  const months = ['Jan 2026', 'Feb 2026', 'Mar 2026 (P)'];
+  const series = [
+    { label: 'Portfolio', data: [2.11, 1.82, 0.26] },
+    { label: 'S&P 500',   data: [2.34, 2.21, 0.03] },
+    { label: '60/40',     data: [1.12, 0.87, 0.12] },
+  ];
+  let html = '<div style="display:grid;grid-template-columns:100px repeat(3,1fr);gap:6px">';
+  html += '<div></div>' + months.map(m => `<div style="text-align:center;font-size:11px;font-weight:600;color:var(--text3);padding:4px">${m}</div>`).join('');
+  series.forEach(s => {
+    html += `<div style="font-size:11px;color:var(--text2);display:flex;align-items:center">${s.label}</div>`;
+    s.data.forEach(v => {
+      const bg = v > 1 ? 'rgba(34,197,94,.3)' : v > 0 ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.2)';
+      const tc = v >= 0 ? 'var(--green)' : 'var(--red)';
+      html += `<div style="background:${bg};border-radius:6px;text-align:center;padding:10px 4px;font-family:'DM Mono',monospace;font-size:13px;color:${tc};font-weight:600">${v >= 0 ? '+' : ''}${v.toFixed(2)}%</div>`;
+    });
+  });
+  el.innerHTML = html + '</div>';
+};
+
+// ─── PEER RANKING ────────────────────────────────────
+CHARTS.buildPeer = function(id) {
+  const rng = seededRand(77);
+  const data = Array.from({ length: 40 }, () => +((rng() * 10 - 1).toFixed(2))).sort((a, b) => a - b);
+  const myIdx = 13;
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: data.map((_, i) => 'P' + (i + 1)),
+      datasets: [{ data, backgroundColor: data.map((_, i) => i === myIdx ? '#3d7fff' : _ >= 0 ? 'rgba(34,197,94,.35)' : 'rgba(239,68,68,.35)'), borderWidth: 0, borderRadius: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...noLegend, tooltip: { ...tooltipDefaults, callbacks: { label: c => 'Return: ' + c.raw + '%' } } },
+      scales: { x: { display: false }, y: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts } }
+    }
+  });
+};
+
+// ─── FACTOR CHART ────────────────────────────────────
+CHARTS.buildFactor = function(id) {
+  const factors = [
+    { name: 'Market Beta', val: 3.12 }, { name: 'Value', val: 0.44 }, { name: 'Momentum', val: 0.38 },
+    { name: 'Quality', val: 0.29 },     { name: 'Size',   val: -0.18 }, { name: 'Low Vol', val: 0.21 },
+  ];
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: factors.map(f => f.name),
+      datasets: [{ data: factors.map(f => f.val), backgroundColor: factors.map(f => f.val >= 0 ? 'rgba(61,127,255,.7)' : 'rgba(239,68,68,.7)'), borderWidth: 0, borderRadius: 4 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { ...noLegend },
+      scales: { x: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts }, y: { ticks: { color: '#8a95aa', font: { size: 11 } }, grid: { display: false } } }
+    }
+  });
+};
+
+// ─── RISK / RETURN SCATTER ───────────────────────────
+CHARTS.buildRiskReturn = function(id) {
+  const pts = DATA.accounts.map((a, i) => ({ x: +(8 + i * 0.7 + (seededRand(i + 10)() * 2)).toFixed(2), y: a.ret, label: a.id }));
+  mkChart(id, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Accounts',  data: pts, backgroundColor: 'rgba(61,127,255,.8)', pointRadius: 7, pointHoverRadius: 9 },
+        { label: 'Benchmark', data: [{ x: 13.8, y: 4.58 }], backgroundColor: 'rgba(239,68,68,.8)', pointRadius: 9, pointStyle: 'triangle' },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } }, tooltip: { ...tooltipDefaults, callbacks: { label: c => c.raw.label ? `${c.raw.label}: (${c.raw.x}% vol, ${c.raw.y}% ret)` : 'Benchmark' } } },
+      scales: {
+        x: { title: { display: true, text: 'Volatility (%)', color: '#5a6478' }, ticks: { color: '#5a6478' }, grid: gridOpts },
+        y: { title: { display: true, text: 'Return (%)',     color: '#5a6478' }, ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts }
+      }
+    }
+  });
+};
+
+// ─── DRAWDOWN ────────────────────────────────────────
+CHARTS.buildDrawdown = function(id) {
+  const port = DATA.series.port;
+  let peak = port[0];
+  const dd = port.map(v => { peak = Math.max(peak, v); return +((v - peak) / peak * 100).toFixed(3); });
+  mkChart(id, {
+    type: 'line',
+    data: { labels: DATA.dates, datasets: [{ label: 'Drawdown', data: dd, borderColor: 'rgba(239,68,68,.8)', borderWidth: 1.5, fill: true, backgroundColor: 'rgba(239,68,68,.1)', pointRadius: 0 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { ...noLegend, tooltip: { ...tooltipDefaults, mode: 'index', intersect: false } },
+      scales: { x: { ticks: { maxTicksLimit: 6, color: '#5a6478' }, grid: gridOpts }, y: { ticks: { color: '#5a6478', callback: v => v.toFixed(1) + '%' }, grid: gridOpts } }
+    }
+  });
+};
+
+// ─── VAR ─────────────────────────────────────────────
+CHARTS.buildVaR = function(id) {
+  const n = 80;
+  const norm = Array.from({ length: n }, (_, i) => { const x = (i - 40) / 10; return Math.exp(-x * x / 2) / Math.sqrt(2 * Math.PI); });
+  mkChart(id, {
+    type: 'line',
+    data: {
+      labels: Array.from({ length: n }, (_, i) => ((i - 40) / 10).toFixed(1)),
+      datasets: [
+        { label: 'Return Dist', data: norm,  borderColor: 'rgba(61,127,255,.6)', borderWidth: 1.5, fill: true, backgroundColor: 'rgba(61,127,255,.1)', pointRadius: 0 },
+        { label: '95% VaR',     data: norm.map((v, i) => i < 8 ? v : null), borderColor: 'transparent', fill: true, backgroundColor: 'rgba(239,68,68,.35)', pointRadius: 0 },
+        { label: '99% VaR',     data: norm.map((v, i) => i < 5 ? v : null), borderColor: 'transparent', fill: true, backgroundColor: 'rgba(239,68,68,.55)', pointRadius: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { maxTicksLimit: 6, color: '#5a6478' }, grid: gridOpts }, y: { display: false } }
+    }
+  });
+};
+
+// ─── MONTE CARLO ─────────────────────────────────────
+CHARTS.runMC = function() {
+  const init   = parseFloat(document.getElementById('mc-init').value)  || 100;
+  const mu     = parseFloat(document.getElementById('mc-ret').value)   / 100 || .075;
+  const sigma  = parseFloat(document.getElementById('mc-vol').value)   / 100 || .091;
+  const years  = parseInt(document.getElementById('mc-years').value)   || 10;
+  const steps  = years * 12;
+  const paths  = 500;
+
+  const rng = seededRand(Date.now() & 0xffff);
+  const all = [], finals = [];
+  for (let p = 0; p < paths; p++) {
+    let v = init; const path = [v];
+    for (let t = 0; t < steps; t++) {
+      const u1 = Math.max(rng(), 1e-9), u2 = rng();
+      const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      v = Math.max(0, v * (1 + mu / 12 + sigma / Math.sqrt(12) * z));
+      path.push(v);
+    }
+    all.push(path); finals.push(path[steps]);
+  }
+  finals.sort((a, b) => a - b);
+  const pct = p => finals[Math.floor(finals.length * p)];
+  const median = all.reduce((acc, p) => acc.map((v, i) => v + p[i] / paths), new Array(steps + 1).fill(0));
+  const p90    = all.reduce((acc, p) => acc.map((v, i) => Math.max(v, p[i])), new Array(steps + 1).fill(0));
+  const p10    = all.reduce((acc, p) => acc.map((v, i) => Math.min(v === 0 ? Infinity : v, p[i] || Infinity)), new Array(steps + 1).fill(Infinity)).map(v => v === Infinity ? 0 : v);
+
+  const labels = Array.from({ length: steps + 1 }, (_, i) => { const m = new Date('2026-01-01'); m.setMonth(m.getMonth() + i); return i % 12 === 0 ? m.getFullYear() : ''; });
+  const skip = Math.floor(paths / 60);
+  const pathDatasets = all.filter((_, i) => i % skip === 0).map(path => ({ data: path, borderColor: 'rgba(61,127,255,.05)', borderWidth: .5, pointRadius: 0, fill: false }));
+
+  mkChart('c-mc', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        ...pathDatasets,
+        { label: 'P90', data: p90,    borderColor: 'rgba(34,197,94,.5)',  borderWidth: 1.5, pointRadius: 0, fill: false },
+        { label: 'P50', data: median, borderColor: 'rgba(61,127,255,.9)', borderWidth: 2.5, pointRadius: 0, fill: false },
+        { label: 'P10', data: p10,    borderColor: 'rgba(239,68,68,.5)',  borderWidth: 1.5, pointRadius: 0, fill: false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
+      plugins: { legend: { display: true, labels: { filter: l => ['P90','P50','P10'].includes(l.text), color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } }, tooltip: { mode: 'index', intersect: false, filter: d => d.datasetIndex >= pathDatasets.length, ...tooltipDefaults } },
+      scales: { x: { ticks: { maxTicksLimit: years + 1, color: '#5a6478' }, grid: gridOpts }, y: { ticks: { color: '#5a6478', callback: v => '$' + v.toFixed(0) + 'M' }, grid: gridOpts } }
+    }
+  });
+
+  const stats = document.getElementById('mc-stats');
+  if (stats) {
+    const rows = [[pct(.10),'10th','var(--red)'],[pct(.25),'25th','var(--gold)'],[pct(.50),'Median','var(--text)'],[pct(.75),'75th','var(--green)'],[pct(.90),'90th','var(--teal)']];
+    stats.innerHTML = rows.map(([v, l, c]) => `<div class="rm-card"><div class="rm-val" style="color:${c}">$${v.toFixed(0)}M</div><div class="rm-label">${l} pctile</div><div class="rm-bench">Yr ${years}</div></div>`).join('');
+  }
+};
+
+// ─── WHAT-IF ─────────────────────────────────────────
+CHARTS.buildWI = function(id) {
+  const a = DATA.wiAssets;
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: a.map(x => x.name),
+      datasets: [
+        { label: 'Current', data: a.map(x => x.base), backgroundColor: 'rgba(107,114,128,.5)', borderRadius: 3, borderWidth: 0 },
+        { label: 'What-If', data: a.map(x => x.val),  backgroundColor: a.map(x => x.color + 'bb'), borderRadius: 3, borderWidth: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { color: '#5a6478', font: { size: 9 } }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts } }
+    }
+  });
+};
+
+// ─── CAPITAL FLOWS ───────────────────────────────────
+CHARTS.buildFlows = function(id) {
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar (P)'],
+      datasets: [
+        { label: 'Inflows',  data: [1240, 1480, 680],  backgroundColor: 'rgba(34,197,94,.7)',  borderRadius: 4, borderWidth: 0 },
+        { label: 'Outflows', data: [-210, -280, -120],  backgroundColor: 'rgba(239,68,68,.7)',  borderRadius: 4, borderWidth: 0 },
+        { label: 'Net',      data: [1030, 1200, 560], type: 'line', borderColor: '#3d7fff', borderWidth: 2.5, pointRadius: 5, fill: false },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => '$' + v + 'M' }, grid: gridOpts } }
+    }
+  });
+};
+
+CHARTS.buildFlowAcct = function(id) {
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: DATA.accounts.map(a => a.id),
+      datasets: [{ label: 'Net Flow ($M)', data: [420,-180,840,-60,320,180,-40,200,90,-60], backgroundColor: d => d.raw >= 0 ? 'rgba(34,197,94,.6)' : 'rgba(239,68,68,.6)', borderRadius: 3, borderWidth: 0 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { ...noLegend },
+      scales: { x: { ticks: { color: '#5a6478', callback: v => '$' + v + 'M' }, grid: gridOpts }, y: { ticks: { color: '#8a95aa', font: { size: 10 } }, grid: { display: false } } }
+    }
+  });
+};
+
+CHARTS.buildFlowSrc = function(id) {
+  mkChart(id, {
+    type: 'doughnut',
+    data: {
+      labels: ['Existing Clients', 'New Relationships', 'Referrals', 'Institutional'],
+      datasets: [{ data: [42, 28, 18, 12], backgroundColor: ['#3d7fff','#a78bfa','#22c55e','#f59e0b'], borderColor: '#0f1218', borderWidth: 2 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: { legend: { display: true, position: 'right', labels: { color: '#8a95aa', font: { size: 10 }, boxWidth: 10 } } }
+    }
+  });
+};
+
+// ─── EXPENSE ─────────────────────────────────────────
+CHARTS.buildER = function(id) {
+  const blended = DATA.expenses.reduce((s, f) => s + f.er * f.wt / 100, 0);
+  const yrs = Array.from({ length: 11 }, (_, i) => 2026 + i);
+  mkChart(id, {
+    type: 'line',
+    data: {
+      labels: yrs,
+      datasets: [
+        { label: 'No Fees (0%)',             data: yrs.map((_, i) => +(100 * Math.pow(1.075, i)).toFixed(2)),                     borderColor: 'rgba(34,197,94,.6)',  borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [4,4] },
+        { label: `Apex (${blended.toFixed(3)}%)`,data: yrs.map((_, i) => +(100 * Math.pow(1.075 - blended / 100, i)).toFixed(2)), borderColor: '#3d7fff',             borderWidth: 2.5, pointRadius: 0, fill: false },
+        { label: 'Industry Avg (0.82%)',     data: yrs.map((_, i) => +(100 * Math.pow(1.075 - .0082, i)).toFixed(2)),             borderColor: 'rgba(239,68,68,.6)',  borderWidth: 1.5, pointRadius: 0, fill: false, borderDash: [4,4] },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => '$' + v + 'M' }, grid: gridOpts } }
+    }
+  });
+};
+
+CHARTS.buildERComp = function(id) {
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: ['Index', 'ETFs', 'Active Eq.', 'Fixed Inc.', 'Alts', 'Target Date', 'This Portfolio'],
+      datasets: [{ data: [.03, .18, .82, .45, 1.24, .68, .31], backgroundColor: (_, i) => i === 6 ? 'rgba(61,127,255,.8)' : 'rgba(107,114,128,.4)', borderRadius: 4, borderWidth: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, plugins: { ...noLegend },
+      scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts } }
+    }
+  });
+};
+
+// ─── TLH ─────────────────────────────────────────────
+CHARTS.buildTLH = function(tlhId, alphaId) {
+  mkChart(tlhId, {
+    type: 'bar',
+    data: { labels: ['Jan', 'Feb', 'Mar'], datasets: [{ data: [2840, 3210, 2350], backgroundColor: 'rgba(245,158,11,.7)', borderRadius: 4, borderWidth: 0 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { ...noLegend }, scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => '$' + v + 'K' }, grid: gridOpts } } }
+  });
+  let cum = 0;
+  mkChart(alphaId, {
+    type: 'line',
+    data: { labels: ['Jan', 'Feb', 'Mar'], datasets: [{ data: [.14, .31, .42], borderColor: '#a78bfa', borderWidth: 2.5, pointRadius: 5, fill: true, backgroundColor: 'rgba(167,139,250,.08)' }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { ...noLegend }, scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts } } }
+  });
+};
+
+// ─── TAX PROJECTOR ───────────────────────────────────
+CHARTS.buildTP = function(id, lt, st, state, niit) {
+  const ltTax = 9.8 * (lt + state + niit);
+  const stTax = 4.4 * (st + state);
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: ['Q1 2026', 'Q2 2026E', 'Q3 2026E', 'Q4 2026E'],
+      datasets: [
+        { label: 'LT Tax',     data: [ltTax*.4, ltTax*.25, ltTax*.2, ltTax*.15], backgroundColor: 'rgba(239,68,68,.6)',  borderRadius: 4, borderWidth: 0 },
+        { label: 'ST Tax',     data: [stTax*.5, stTax*.2,  stTax*.15,stTax*.15], backgroundColor: 'rgba(245,158,11,.6)', borderRadius: 4, borderWidth: 0 },
+        { label: 'TLH Offset', data: [-2.8, -1.4, -1.2, -1.0],                  backgroundColor: 'rgba(34,197,94,.6)',  borderRadius: 4, borderWidth: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { color: '#5a6478' }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => '$' + v.toFixed(1) + 'M' }, grid: gridOpts } }
+    }
+  });
+  return { ltTax, stTax };
+};
+
+// ─── MANAGER CHARTS ──────────────────────────────────
+CHARTS.buildIR = function(id) {
+  const mgrs = DATA.managers;
+  mkChart(id, {
+    type: 'bar',
+    data: { labels: mgrs.map(m => m.name.split(' ')[0]), datasets: [{ data: mgrs.map(m => +(m.alpha / .9).toFixed(2)), backgroundColor: mgrs.map(m => m.alpha >= 0 ? 'rgba(61,127,255,.7)' : 'rgba(239,68,68,.7)'), borderRadius: 4, borderWidth: 0 }] },
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { ...noLegend }, scales: { x: { ticks: { color: '#5a6478' }, grid: gridOpts }, y: { ticks: { color: '#8a95aa', font: { size: 10 } }, grid: { display: false } } } }
+  });
+};
+CHARTS.buildCapture = function(id) {
+  const mgrs = DATA.managers;
+  mkChart(id, {
+    type: 'bar',
+    data: {
+      labels: mgrs.map(m => m.name.split(' ')[0]),
+      datasets: [
+        { label: 'Up Capture',   data: [108, 104, 96, 89, 112], backgroundColor: 'rgba(34,197,94,.6)',  borderRadius: 4, borderWidth: 0 },
+        { label: 'Down Capture', data: [82,  78,  94, 102, 76], backgroundColor: 'rgba(239,68,68,.6)', borderRadius: 4, borderWidth: 0 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: true, labels: { color: '#8a95aa', font: { size: 11 }, boxWidth: 10 } } },
+      scales: { x: { ticks: { color: '#5a6478', font: { size: 10 } }, grid: { display: false } }, y: { ticks: { color: '#5a6478', callback: v => v + '%' }, grid: gridOpts } }
+    }
+  });
+};
+
+
+// ═══ APP ═══
+// ═══════════════════════════════════════════════════
+//  APEX WEALTH — APP LOGIC
+// ═══════════════════════════════════════════════════
+
+// ─── NAVIGATION ─────────────────────────────────────
+const pageTitles = {
+  overview:'Overview', accounts:'Accounts', performance:'Performance',
+  attribution:'Attribution', risk:'Risk Metrics', montecarlo:'Monte Carlo',
+  whatif:'What-If Scenario', transactions:'Transactions', flows:'Capital Flows',
+  expenses:'Expense Analyzer', tax:'Tax Overlay', manager:'Manager Due Diligence',
+  models:'Model Management', compliance:'Compliance & GIPS', portal:'Client Portal',
+};
+const initialized = {};
+
+function navTo(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const activeBtn = document.querySelector('.nav-item[data-page="' + id + '"]');
+  if (activeBtn) activeBtn.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById('page-' + id);
+  if (pg) pg.classList.add('active');
+  document.getElementById('pageTitle').textContent = pageTitles[id] || id;
+  if (!initialized[id]) { initialized[id] = true; setTimeout(() => buildPage(id), 60); }
+}
+// Wire nav items
+document.querySelectorAll('.nav-item[data-page]').forEach(btn => {
+  btn.addEventListener('click', () => navTo(btn.dataset.page));
+});
+window.navTo = navTo;
+
+function buildPage(id) {
+  if (id === 'overview')     buildOverview();
+  else if (id === 'accounts')     buildAccounts();
+  else if (id === 'performance')  buildPerformance();
+  else if (id === 'attribution')  buildAttribution();
+  else if (id === 'risk')         buildRisk();
+  else if (id === 'montecarlo')   { CHARTS.runMC(); }
+  else if (id === 'whatif')       buildWhatIf();
+  else if (id === 'transactions') buildTransactions();
+  else if (id === 'flows')        buildFlows();
+  else if (id === 'expenses')     buildExpenses();
+  else if (id === 'tax')          buildTax();
+  else if (id === 'manager')      buildManager();
+  else if (id === 'models')       buildModels();
+  else if (id === 'compliance')   buildCompliance();
+}
+
+// ─── TAB SWITCHER ────────────────────────────────────
+const tabGroups = {
+  perf:  ['ts','trailing','calendar','peer'],
+  tx:    ['all','buy','sell','div','fee'],
+  tax:   ['tlh','gl','wash','proj'],
+  mgr:   ['cards','quant','watch','search'],
+  mod:   ['lib','drift','rebal','props'],
+  comp:  ['gips','rules','ips','audit'],
+};
+function showTab(group, id, btn) {
+  if (btn) { btn.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active'); }
+  tabGroups[group].forEach(t => {
+    const el = document.getElementById(group + '-' + t);
+    if (el) el.style.display = t === id ? 'block' : 'none';
+  });
+  // lazy init
+  if (group === 'perf' && id === 'trailing' && !initialized['perf-trailing']) { initialized['perf-trailing'] = true; setTimeout(() => CHARTS.buildTrailing('c-trailing'), 50); }
+  if (group === 'perf' && id === 'calendar' && !initialized['perf-calendar']) { initialized['perf-calendar'] = true; setTimeout(() => CHARTS.buildCalendar('calendar-grid'), 50); }
+  if (group === 'perf' && id === 'peer'     && !initialized['perf-peer'])     { initialized['perf-peer'] = true;     setTimeout(() => CHARTS.buildPeer('c-peer'), 50); }
+  if (group === 'mgr'  && id === 'quant'    && !initialized['mgr-quant'])     { initialized['mgr-quant'] = true;     setTimeout(() => { CHARTS.buildIR('c-ir'); CHARTS.buildCapture('c-capture'); }, 50); }
+  if (group === 'mgr'  && id === 'search'   && !initialized['mgr-search'])    { initialized['mgr-search'] = true;    setTimeout(() => buildMgrSearch(), 50); }
+  if (group === 'mod'  && id === 'drift'    && !initialized['mod-drift'])     { initialized['mod-drift'] = true;     setTimeout(() => buildDriftMonitor(), 50); }
+  if (group === 'mod'  && id === 'rebal'    && !initialized['mod-rebal'])     { initialized['mod-rebal'] = true;     setTimeout(() => buildRebalTable(), 50); }
+  if (group === 'mod'  && id === 'props'    && !initialized['mod-props'])     { initialized['mod-props'] = true;     setTimeout(() => buildProposals(), 50); }
+  if (group === 'comp' && id === 'rules'    && !initialized['comp-rules'])    { initialized['comp-rules'] = true;    setTimeout(() => buildRulesMonitor(), 50); }
+  if (group === 'comp' && id === 'ips'      && !initialized['comp-ips'])      { initialized['comp-ips'] = true;      setTimeout(() => buildIPS(), 50); }
+  if (group === 'comp' && id === 'audit'    && !initialized['comp-audit'])    { initialized['comp-audit'] = true;    setTimeout(() => buildAudit(), 50); }
+  if (group === 'tax'  && id === 'proj'     && !initialized['tax-proj'])      { initialized['tax-proj'] = true;      setTimeout(() => updateTP(), 50); }
+}
+window.showTab = showTab;
+
+function filterAcct(id, el) {
+  document.querySelectorAll('.acct-chip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+window.filterAcct = filterAcct;
+
+function setPeriod(btn, p) {
+  btn.closest('.ptabs').querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+}
+window.setPeriod = setPeriod;
+
+function runMC() { CHARTS.runMC(); }
+window.runMC = runMC;
+
+// ─── HELPERS ─────────────────────────────────────────
+function fmtPct(v) { return (v >= 0 ? '+' : '') + v.toFixed(2) + '%'; }
+function fmtM(v)   { return '$' + v.toFixed(1) + 'B'; }
+function chipPct(v) { return v >= 0 ? `<span class="chip chip-up">${fmtPct(v)}</span>` : `<span class="chip chip-dn">${fmtPct(v)}</span>`; }
+
+const statusChip = { 'Active': 'chip-up', 'Drift Alert': 'chip-gold', 'Cash Hold': 'chip-blue' };
+
+// ─── OVERVIEW ────────────────────────────────────────
+function buildOverview() {
+  CHARTS.buildPerf('c-perf');
+  CHARTS.buildAlloc('c-alloc', 'alloc-legend');
+
+  // Sparkline seeds
+  const tb = document.getElementById('acct-table');
+  tb.innerHTML = DATA.accounts.map((a, i) => `
+    <tr>
+      <td class="mono strong">${a.id}</td>
+      <td>${a.name}</td>
+      <td style="color:var(--text3);font-size:11px">${a.model}</td>
+      <td class="mono">${fmtM(a.aum)}</td>
+      <td class="mono" style="color:${a.ret>=0?'var(--green)':'var(--red)'}">${fmtPct(a.ret)}</td>
+      <td class="mono" style="color:${a.vsBM>=0?'var(--green)':'var(--red)'}">${fmtPct(a.vsBM)}</td>
+      <td class="mono">${a.sharpe.toFixed(2)}</td>
+      <td class="mono" style="color:var(--red)">${a.maxDD.toFixed(1)}%</td>
+      <td><canvas id="sp-${a.id}" width="80" height="28" data-seed="${i+1}" class="spark"></canvas></td>
+      <td><span class="chip ${statusChip[a.status]||'chip-blue'}">${a.status}</span></td>
+    </tr>`).join('');
+  setTimeout(() => DATA.accounts.forEach(a => CHARTS.buildSparkline('sp-' + a.id)), 80);
+}
+
+// ─── ACCOUNTS PAGE ───────────────────────────────────
+function buildAccounts() {
+  const g = document.getElementById('acct-cards');
+  g.innerHTML = DATA.accounts.map(a => `
+    <div style="background:var(--bg2);border:1px solid ${a.status==='Drift Alert'?'var(--gold)':a.status==='Cash Hold'?'var(--accent)':'var(--border)'};border-radius:10px;padding:14px;cursor:pointer;transition:all .15s"
+         onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div class="mono" style="font-size:10px;color:var(--text3);margin-bottom:3px">${a.id} · Fidelity</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">${a.name}</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:2px">${fmtM(a.aum)}</div>
+      <div style="font-size:12px;color:${a.ret>=0?'var(--green)':'var(--red)'};">${fmtPct(a.ret)} ITD</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">${a.model}</div>
+      <div style="margin-top:6px"><span class="chip ${statusChip[a.status]||'chip-blue'}">${a.status}</span></div>
+    </div>`).join('');
+}
+
+// ─── PERFORMANCE ─────────────────────────────────────
+function buildPerformance() {
+  CHARTS.buildPerfDetail('c-perf-detail');
+  CHARTS.buildRetDist('c-retdist');
+}
+
+// ─── ATTRIBUTION ─────────────────────────────────────
+function buildAttribution() {
+  const allocData = [
+    { name:'Technology', val:.48, c:'var(--accent)' }, { name:'Healthcare', val:-.12, c:'var(--red)' },
+    { name:'Financials', val:.22, c:'var(--green)' },  { name:'Consumer', val:-.08, c:'var(--red)' },
+    { name:'Industrials',val:.15, c:'var(--teal)' },
+  ];
+  const selData = [
+    { name:'Technology', val:.31, c:'var(--accent)' }, { name:'Financials', val:.19, c:'var(--green)' },
+    { name:'Healthcare', val:-.22, c:'var(--red)' },   { name:'Energy', val:.14, c:'var(--gold)' },
+    { name:'Industrials',val:.09, c:'var(--teal)' },
+  ];
+  function renderAttr(id, data) {
+    const max = Math.max(...data.map(d => Math.abs(d.val)));
+    document.getElementById(id).innerHTML = data.map(d =>
+      `<div class="attr-row">
+        <div class="attr-label">${d.name}</div>
+        <div class="attr-bar"><div class="attr-fill" style="width:${Math.abs(d.val)/max*100}%;background:${d.c}"></div></div>
+        <div class="attr-val" style="color:${d.c}">${d.val>=0?'+':''}${d.val.toFixed(2)}%</div>
+      </div>`
+    ).join('');
+  }
+  renderAttr('alloc-attr', allocData);
+  renderAttr('sel-attr', selData);
+
+  const factors = [
+    { name:'Market Beta', val:3.12, c:'var(--accent)' }, { name:'Value', val:.44, c:'var(--green)' },
+    { name:'Momentum', val:.38, c:'var(--teal)' },       { name:'Quality', val:.29, c:'var(--purple)' },
+    { name:'Size', val:-.18, c:'var(--red)' },            { name:'Low Vol', val:.21, c:'var(--gold)' },
+  ];
+  document.getElementById('factor-attr').innerHTML = factors.map(f =>
+    `<div class="attr-row">
+      <div class="attr-label">${f.name}</div>
+      <div class="attr-bar"><div class="attr-fill" style="width:${Math.abs(f.val)/3.5*100}%;background:${f.c}"></div></div>
+      <div class="attr-val" style="color:${f.c}">${f.val>=0?'+':''}${f.val.toFixed(2)}%</div>
+    </div>`
+  ).join('');
+  CHARTS.buildFactor('c-factor');
+
+  const sectors = [
+    ['Technology',32,28,4,8.2,6.9,.48,.31,.79], ['Healthcare',14,16,-2,4.1,5.2,-.12,-.22,-.34],
+    ['Financials',15,13,2,5.4,4.8,.22,.19,.41],  ['Consumer',10,11,-1,3.8,4.0,-.08,-.04,-.12],
+    ['Industrials',9,8,1,4.9,4.5,.15,.09,.24],   ['Energy',5,6,-1,6.1,5.8,.14,.02,.16],
+    ['Other',15,18,-3,2.8,3.1,-.11,-.05,-.16],
+  ];
+  document.getElementById('sector-attr-table').innerHTML = sectors.map(r =>
+    `<tr>
+      <td class="strong">${r[0]}</td>
+      <td class="mono">${r[1]}%</td><td class="mono">${r[2]}%</td>
+      <td class="mono" style="color:${r[3]>=0?'var(--green)':'var(--red)'}">${r[3]>=0?'+':''}${r[3]}%</td>
+      <td class="mono" style="color:var(--green)">${r[4]}%</td><td class="mono">${r[5]}%</td>
+      <td class="mono" style="color:${r[6]>=0?'var(--green)':'var(--red)'}">${r[6]>=0?'+':''}${r[6].toFixed(2)}%</td>
+      <td class="mono" style="color:${r[7]>=0?'var(--green)':'var(--red)'}">${r[7]>=0?'+':''}${r[7].toFixed(2)}%</td>
+      <td class="mono" style="color:${r[8]>=0?'var(--green)':'var(--red)';font-weight:600}">${r[8]>=0?'+':''}${r[8].toFixed(2)}%</td>
+    </tr>`
+  ).join('');
+}
+
+// ─── RISK ─────────────────────────────────────────────
+function buildRisk() {
+  const kpis = [
+    { label:'Beta', val:'0.82', bench:'BM: 1.00' },
+    { label:'Alpha (ann)', val:'+1.2%', bench:'vs S&P 500', c:'var(--green)' },
+    { label:'Volatility', val:'9.1%', bench:'BM: 13.8%' },
+    { label:'Sharpe', val:'1.42', bench:'BM: 1.18', c:'var(--green)' },
+    { label:'Sortino', val:'1.79', bench:'BM: 1.41', c:'var(--green)' },
+    { label:'Max DD', val:'-2.4%', bench:'BM: -5.8%', c:'var(--gold)' },
+  ];
+  document.getElementById('risk-kpis').innerHTML = kpis.map(k =>
+    `<div class="rm-card"><div class="rm-val" style="${k.c?'color:'+k.c:''}">${k.val}</div><div class="rm-label">${k.label}</div><div class="rm-bench">${k.bench}</div></div>`
+  ).join('');
+  CHARTS.buildRiskReturn('c-riskret');
+  CHARTS.buildDrawdown('c-dd');
+  CHARTS.buildVaR('c-var');
+
+  const assets = ['Port','US Eq','Int\'l','Fixed','Alt','RE'];
+  const corr = [[1,.82,.71,-.22,.34,.44],[.82,1,.68,-.18,.28,.51],[.71,.68,1,-.14,.22,.38],[-.22,-.18,-.14,1,.08,-.06],[.34,.28,.22,.08,1,.41],[.44,.51,.38,-.06,.41,1]];
+  const cm = document.getElementById('corr-matrix');
+  let html = '<div style="display:grid;grid-template-columns:52px repeat(6,1fr);gap:2px;font-size:9px">';
+  html += '<div></div>' + assets.map(a => `<div style="text-align:center;color:var(--text3);padding:2px;font-weight:700">${a}</div>`).join('');
+  assets.forEach((a, i) => {
+    html += `<div style="color:var(--text3);display:flex;align-items:center;font-size:10px;padding-right:4px">${a}</div>`;
+    corr[i].forEach((v, j) => {
+      const bg = v > 0 ? `rgba(61,127,255,${Math.abs(v)*.7})` : `rgba(239,68,68,${Math.abs(v)*.7})`;
+      const tc = Math.abs(v) > .5 ? '#e8ecf4' : '#8a95aa';
+      html += `<div class="corr-cell" style="background:${bg};color:${tc}">${v.toFixed(2)}</div>`;
+    });
+  });
+  cm.innerHTML = html + '</div>';
+}
+
+// ─── WHAT-IF ─────────────────────────────────────────
+function buildWhatIf() {
+  const sl = document.getElementById('wi-sliders');
+  sl.innerHTML = DATA.wiAssets.map((a, i) => `
+    <div style="display:grid;grid-template-columns:110px 1fr 42px;gap:8px;align-items:center;margin-bottom:8px">
+      <div style="font-size:11px;color:var(--text2)">${a.name}</div>
+      <input type="range" min="0" max="80" value="${a.val}" step="1" oninput="updateWI(${i},this.value)">
+      <div class="mono" id="wi-v-${i}" style="font-size:11px;text-align:right">${a.val}%</div>
+    </div>`).join('');
+  CHARTS.buildWI('c-wi');
+
+  const stresses = [
+    { label:'2008 GFC', port:-22.4, bm:-37.0, c:'var(--red)' },
+    { label:'2020 COVID', port:-14.8, bm:-33.9, c:'var(--orange)' },
+    { label:'Rates +200bps', port:-6.2, bm:-8.1, c:'var(--gold)' },
+    { label:'USD +15%', port:-3.8, bm:-4.2, c:'var(--purple)' },
+  ];
+  document.getElementById('stress-grid').innerHTML = stresses.map(s =>
+    `<div class="rm-card">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${s.label}</div>
+      <div class="rm-val" style="color:${s.c}">${s.port}%</div>
+      <div class="rm-bench">vs BM: ${s.bm}%</div>
+      <div class="prog" style="margin-top:8px"><div class="prog-fill" style="width:${Math.abs(s.port/s.bm*100)}%;background:${s.c}"></div></div>
+    </div>`
+  ).join('');
+}
+
+function updateWI(i, v) {
+  DATA.wiAssets[i].val = parseInt(v);
+  const el = document.getElementById('wi-v-' + i); if (el) el.textContent = v + '%';
+  const total = DATA.wiAssets.reduce((s, a) => s + a.val, 0);
+  const tot = document.getElementById('wi-total');
+  if (tot) { tot.textContent = total + '%'; tot.style.color = total === 100 ? 'var(--green)' : total > 100 ? 'var(--red)' : 'var(--gold)'; }
+}
+window.updateWI = updateWI;
+
+function runWI() {
+  const a = DATA.wiAssets;
+  const newRet = a.reduce((s, x) => s + x.val / 100 * x.ret, 0);
+  const curRet = a.reduce((s, x) => s + x.base / 100 * x.ret, 0);
+  const newVol = Math.sqrt(a.reduce((s, x) => s + Math.pow(x.val / 100 * x.vol / 100, 2), 0)) * 100;
+  const delta = newRet - curRet;
+  const impact = document.getElementById('wi-impact');
+  if (impact) impact.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="rm-card"><div class="rm-val" style="color:var(--accent)">${newRet.toFixed(2)}%</div><div class="rm-label">Est. Return</div><div class="rm-bench" style="color:${delta>=0?'var(--green)':'var(--red)'}">${delta>=0?'+':''}${delta.toFixed(2)}% vs current</div></div>
+      <div class="rm-card"><div class="rm-val">${newVol.toFixed(2)}%</div><div class="rm-label">Est. Volatility</div><div class="rm-bench">Sharpe: ${(newRet/100/newVol*100).toFixed(2)}</div></div>
+    </div>`;
+  CHARTS.buildWI('c-wi');
+}
+window.runWI = runWI;
+
+function resetWI() {
+  DATA.wiAssets.forEach((a, i) => {
+    a.val = a.base;
+    const inp = document.querySelectorAll('#wi-sliders input')[i]; if (inp) inp.value = a.base;
+    const el = document.getElementById('wi-v-' + i); if (el) el.textContent = a.base + '%';
+  });
+  const tot = document.getElementById('wi-total');
+  if (tot) { tot.textContent = '100%'; tot.style.color = 'var(--green)'; }
+}
+window.resetWI = resetWI;
+
+// ─── TRANSACTIONS ─────────────────────────────────────
+let txFilter = 'all';
+function buildTransactions() { renderTx(); }
+function renderTx() {
+  const map = { Buy:'buy', Sell:'sell', Div:'div', Fee:'fee' };
+  const filtered = txFilter === 'all' ? DATA.transactions : DATA.transactions.filter(t => map[t.type] === txFilter);
+  const typeC = { Buy:'chip-up', Sell:'chip-dn', Div:'chip-blue', Fee:'chip-gold' };
+  document.getElementById('tx-table').innerHTML = filtered.map(t => `
+    <tr>
+      <td class="mono" style="color:var(--text3)">${t.date}</td>
+      <td class="mono">${t.acct}</td>
+      <td><span class="chip ${typeC[t.type]}">${t.type}</span></td>
+      <td class="strong">${t.sec}</td>
+      <td class="mono">${t.shares}</td>
+      <td class="mono">${t.price === '-' ? '—' : '$' + t.price}</td>
+      <td class="mono" style="color:${t.amount>0?'var(--green)':'var(--text2)'}">${t.amount>0?'+':''} $${Math.abs(t.amount).toLocaleString()}</td>
+      <td class="mono" style="color:${t.gl?'var(--green)':'var(--text3)'}">${t.gl || '—'}</td>
+      <td><span class="chip ${t.status==='Settled'?'chip-up':'chip-blue'}">${t.status}</span></td>
+    </tr>`).join('');
+}
+
+// expose tab switcher for tx
+document.querySelectorAll('#page-transactions .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#page-transactions .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const map2 = { All:'all', Buys:'buy', Sells:'sell', Dividends:'div', Fees:'fee' };
+    txFilter = map2[btn.textContent] || 'all';
+    renderTx();
+  });
+});
+
+// ─── FLOWS ───────────────────────────────────────────
+function buildFlows() {
+  CHARTS.buildFlows('c-flows');
+  CHARTS.buildFlowAcct('c-flowacct');
+  CHARTS.buildFlowSrc('c-flowsrc');
+}
+
+// ─── EXPENSES ────────────────────────────────────────
+function buildExpenses() {
+  let blended = 0;
+  document.getElementById('er-rows').innerHTML = DATA.expenses.map(f => {
+    const w = f.er * f.wt / 100; blended += w;
+    return `<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+      <span style="flex:1;color:var(--text2)">${f.name}</span>
+      <span class="mono" style="width:50px;text-align:right;color:var(--text3)">${f.wt}%</span>
+      <span class="mono" style="width:55px;text-align:right;color:var(--text2)">${f.er.toFixed(3)}%</span>
+      <span class="mono" style="width:65px;text-align:right;color:var(--gold)">${w.toFixed(4)}%</span>
+    </div>`;
+  }).join('');
+  const erEl = document.getElementById('blended-er');
+  if (erEl) erEl.textContent = blended.toFixed(3) + '%';
+  CHARTS.buildER('c-er');
+  CHARTS.buildERComp('c-ercomp');
+}
+
+// ─── TAX ─────────────────────────────────────────────
+function buildTax() {
+  document.getElementById('tlh-table').innerHTML = DATA.tlh.map(r =>
+    `<tr>
+      <td class="mono">${r.acct}</td>
+      <td class="strong">${r.sec}</td>
+      <td class="mono">${r.shares.toLocaleString()}</td>
+      <td class="mono">$${r.cost.toFixed(2)}</td>
+      <td class="mono">$${r.curr.toFixed(2)}</td>
+      <td class="mono" style="color:var(--red)">-$${Math.abs(r.loss).toLocaleString()}</td>
+      <td class="mono" style="color:var(--green)">$${r.savings.toLocaleString()}</td>
+      <td style="color:var(--teal)">${r.swap}</td>
+      <td><span class="chip ${r.wash==='Clear'?'chip-up':'chip-gold'}">${r.wash}</span></td>
+      <td><button class="run-btn" style="padding:3px 9px;font-size:10px">Harvest</button></td>
+    </tr>`
+  ).join('');
+  CHARTS.buildTLH('c-tlh', 'c-taxalpha');
+
+  document.getElementById('gl-table').innerHTML = DATA.gl.map(r =>
+    `<tr>
+      <td class="mono">${r.acct}</td><td class="strong">${r.sec}</td>
+      <td class="mono">${r.open}</td><td class="mono">${r.close}</td>
+      <td>${r.type === 'Long-Term' ? '> 1 Yr' : '< 1 Yr'}</td>
+      <td class="mono">$${r.cost.toLocaleString()}</td>
+      <td class="mono">$${r.proc.toLocaleString()}</td>
+      <td class="mono" style="color:${r.gl>=0?'var(--green)':'var(--red)'}">${r.gl>=0?'+':'-'}$${Math.abs(r.gl).toLocaleString()}</td>
+      <td><span class="chip ${r.type==='Long-Term'?'chip-up':'chip-gold'}">${r.type}</span></td>
+    </tr>`
+  ).join('');
+}
+
+function updateTP() {
+  const lt    = parseFloat(document.getElementById('tp-lt')?.value    || 23.8) / 100;
+  const st    = parseFloat(document.getElementById('tp-st')?.value    || 37)   / 100;
+  const state = parseFloat(document.getElementById('tp-state')?.value || 9.3)  / 100;
+  const niit  = parseFloat(document.getElementById('tp-niit')?.value  || 3.8)  / 100;
+  const setV = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = (v*100).toFixed(1)+'%'; };
+  setV('tp-lt-v', lt); setV('tp-st-v', st); setV('tp-state-v', state); setV('tp-niit-v', niit);
+  const { ltTax, stTax } = CHARTS.buildTP('c-tp', lt, st, state, niit);
+  const g = document.getElementById('tp-kpis');
+  if (g) g.innerHTML = [
+    ['$'+ltTax.toFixed(2)+'M','LT Tax Due','On $9.8M gain','var(--red)'],
+    ['$'+stTax.toFixed(2)+'M','ST Tax Due','On $4.4M gain','var(--red)'],
+    ['$'+(ltTax+stTax).toFixed(2)+'M','Total Est.','YTD liability','var(--gold)'],
+    ['$'+((ltTax+stTax)*.42).toFixed(2)+'M','TLH Offset','Available','var(--green)'],
+  ].map(([v,l,b,c]) => `<div class="rm-card"><div class="rm-val" style="color:${c}">${v}</div><div class="rm-label">${l}</div><div class="rm-bench">${b}</div></div>`).join('');
+}
+window.updateTP = updateTP;
+
+// ─── MANAGER ─────────────────────────────────────────
+function buildManager() {
+  const g = document.getElementById('mgr-card-list');
+  g.innerHTML = DATA.managers.map(m => {
+    const sc = m.score >= 80 ? 'var(--green)' : m.score >= 65 ? 'var(--gold)' : 'var(--red)';
+    const segs = Array.from({ length: 10 }, (_, i) => {
+      const filled = i < Math.round(m.score / 10);
+      const c = filled ? (m.score >= 80 ? '#22c55e' : m.score >= 65 ? '#f59e0b' : '#ef4444') : 'var(--bg4)';
+      return `<div style="flex:1;height:5px;border-radius:1px;background:${c}"></div>`;
+    }).join('');
+    return `<div style="background:var(--bg3);border:1px solid ${m.status==='Watch'?'var(--red)':'var(--border)'};border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:40px;height:40px;border-radius:8px;background:${m.color}22;color:${m.color};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0">${m.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600">${m.name}</div>
+            <div style="font-size:11px;color:var(--text3)">${m.strategy} · ${m.aum} AUM</div>
+            <div style="display:flex;gap:2px;margin-top:5px;width:160px">${segs}</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div class="mono" style="font-size:22px;font-weight:700;color:${sc}">${m.score}</div>
+          <div style="font-size:9px;color:var(--text3)">/100</div>
+          <span class="chip ${m.status==='Watch'?'chip-dn':'chip-up'}" style="margin-top:4px">${m.status}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div class="rm-card" style="padding:8px"><div class="rm-val" style="font-size:14px;color:${m.ret>4?'var(--green)':'var(--text)'}">${m.ret}%</div><div class="rm-label" style="font-size:9px">ITD Ret</div></div>
+        <div class="rm-card" style="padding:8px"><div class="rm-val" style="font-size:14px;color:${m.alpha>0?'var(--green)':'var(--red)'}">${m.alpha>0?'+':''}${m.alpha}%</div><div class="rm-label" style="font-size:9px">Alpha</div></div>
+        <div class="rm-card" style="padding:8px"><div class="rm-val" style="font-size:14px">${m.sharpe}</div><div class="rm-label" style="font-size:9px">Sharpe</div></div>
+        <div class="rm-card" style="padding:8px"><div style="font-size:10px;color:var(--text2);margin-bottom:3px">Next Review</div><div class="mono" style="font-size:11px">Apr 1, 2026</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildMgrSearch() {
+  const sc = m => m.score >= 80 ? 'var(--green)' : m.score >= 70 ? 'var(--gold)' : 'var(--text)';
+  document.getElementById('mgr-search-table').innerHTML = DATA.mgrSearch.map(m =>
+    `<tr>
+      <td class="strong">${m.name}</td><td style="color:var(--text3)">${m.strat}</td>
+      <td class="mono">${m.aum}</td>
+      <td class="mono" style="color:var(--green)">+${m.alpha}%</td>
+      <td class="mono">${m.sharpe}</td><td class="mono">${m.ir}</td>
+      <td class="mono" style="color:var(--red)">${m.dd}%</td>
+      <td class="mono" style="color:${sc(m)};font-weight:700">${m.score}</td>
+      <td><button class="run-btn" style="padding:3px 9px;font-size:10px">+ Add</button></td>
+    </tr>`
+  ).join('');
+}
+
+// ─── MODELS ──────────────────────────────────────────
+function buildModels() {
+  document.getElementById('model-cards').innerHTML = DATA.models.map(m => `
+    <div class="model-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div>
+          <div style="font-size:13px;font-weight:600">${m.name}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">Accounts: ${m.accts.join(', ')} · TE: ${m.te}%</div>
+        </div>
+        <span class="chip ${m.drift?'chip-gold':'chip-up'}">${m.drift?'Drift Alert':'On Target'}</span>
+      </div>
+      ${[['Equity',m.eq,'#3d7fff'],['Fixed Income',m.fi,'#f59e0b'],['Alt/Other',m.alt,'#a78bfa']].map(([l,v,c]) =>
+        `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+          <div style="font-size:11px;color:var(--text2);width:90px;flex-shrink:0">${l}</div>
+          <div style="flex:1;height:8px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:${v}%;background:${c}99;border-radius:3px"></div></div>
+          <div class="mono" style="font-size:11px;width:40px;text-align:right;color:var(--text2)">${v}%</div>
+        </div>`
+      ).join('')}
+    </div>`).join('');
+}
+
+function buildDriftMonitor() {
+  document.getElementById('drift-monitor').innerHTML = DATA.drift.map(a => {
+    const mx = Math.max(...[Math.abs(a.eq-a.eqT), Math.abs(a.fi-a.fiT), Math.abs(a.alt-a.altT)]);
+    const driftHigh = mx >= 4;
+    return `<div style="background:var(--bg3);border:1px solid ${driftHigh?'var(--gold)':'var(--border)'};border-radius:8px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <div><span style="font-weight:600">${a.id} — ${a.name}</span> <span style="font-size:11px;color:var(--text3)">· ${a.model}</span></div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="chip ${driftHigh?'chip-gold':'chip-up'}">${driftHigh?'Rebalance Needed':'On Target'}</span>
+          <span class="mono" style="font-size:10px;color:${driftHigh?'var(--gold)':'var(--text3)'}">Max: ${mx.toFixed(1)}%</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${[['Equity',a.eq,a.eqT,'#3d7fff'],['Fixed Income',a.fi,a.fiT,'#f59e0b'],['Alt/Other',a.alt,a.altT,'#a78bfa']].map(([l,c,t,col]) => {
+          const dev = (c-t).toFixed(1);
+          return `<div>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:3px"><span>${l}</span><span>${c}% / ${t}% tgt</span></div>
+            <div class="drift-bar"><div class="drift-fill" style="width:${c}%;max-width:100%;background:${col}88"></div><div class="drift-center"></div></div>
+            <div class="mono" style="font-size:9px;color:${parseFloat(dev)>=0?'var(--green)':'var(--red)'};margin-top:2px">${dev>=0?'+':''}${dev}% dev</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildRebalTable() {
+  document.getElementById('rebal-table').innerHTML = DATA.rebal.map(r =>
+    `<tr>
+      <td class="mono">${r.acct}</td><td class="strong">${r.sec}</td>
+      <td class="mono">${r.curr}</td><td class="mono">${r.tgt}</td>
+      <td class="mono" style="color:${r.dev[0]==='-'?'var(--green)':'var(--red)'}">${r.dev}</td>
+      <td><span class="chip ${r.action==='BUY'?'chip-up':'chip-gold'}">${r.action}</span></td>
+      <td class="mono">${r.val}</td>
+      <td style="color:${r.tax==='None'?'var(--green)':'var(--gold)'}">${r.tax}</td>
+      <td><span class="chip ${r.pri==='High'?'chip-dn':r.pri==='Medium'?'chip-gold':'chip-blue'}">${r.pri}</span></td>
+    </tr>`
+  ).join('');
+}
+
+function buildProposals() {
+  document.getElementById('prop-table').innerHTML = DATA.proposals.map(p =>
+    `<tr>
+      <td class="mono" style="color:var(--accent)">${p.id}</td>
+      <td class="mono">${p.acct}</td>
+      <td><span class="chip chip-blue">${p.type}</span></td>
+      <td style="color:var(--text2)">${p.desc}</td>
+      <td class="mono" style="color:var(--gold)">${p.cost}</td>
+      <td class="mono">${p.init}</td>
+      <td>${p.approver}</td>
+      <td><span class="chip ${p.status==='Approved'?'chip-up':'chip-gold'}">${p.status}</span></td>
+    </tr>`
+  ).join('');
+}
+
+// ─── COMPLIANCE ───────────────────────────────────────
+function buildCompliance() { buildGIPS(); }
+
+function buildGIPS() {
+  const rows = [
+    ['Composite Name','Balanced Growth Composite'],
+    ['Creation Date','January 1, 2026'],
+    ['Currency','USD'],
+    ['Total Firm Assets','$100.2 Billion'],
+    ['Composite Assets','$21.8 Billion (21.7% of firm)'],
+    ['Accounts in Composite','2 (FID-001, FID-007)'],
+    ['ITD Return (Gross)','4.26%'],
+    ['ITD Return (Net)','3.95%'],
+    ['Benchmark Return','4.58% (60/40 S&P/Agg)'],
+    ['Composite Dispersion','0.24% (internal std dev)'],
+    ['Std Dev (composite)','9.1% annualized'],
+    ['Std Dev (benchmark)','13.8% annualized'],
+    ['Fee Schedule','0.65% on first $25M; 0.50% above'],
+    ['Min Account Size','$1,000,000'],
+    ['Verifier','ACA Group, LLC'],
+  ];
+  document.getElementById('gips-report').innerHTML =
+    `<div style="margin-bottom:10px;font-size:11px;color:var(--text3)">Period: Jan 1 – Mar 18, 2026 · Firm claims GIPS® compliance</div>` +
+    rows.map(([k, v]) => `<div class="gips-row"><span class="gips-key">${k}</span><span class="gips-val">${v}</span><span class="gips-pass">PASS</span></div>`).join('') +
+    `<div style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:6px;font-size:10px;color:var(--text3)">Apex Wealth Management claims compliance with GIPS® and has prepared this report accordingly. Independently verified by ACA Group, LLC.</div>`;
+
+  const checks = [
+    ['Composite definition documented','PASS'],['Carve-out policy documented','PASS'],
+    ['TWR calculation methodology','PASS'],['Gross AND net returns presented','PASS'],
+    ['Benchmark presented all periods','PASS'],['Inception date disclosed','PASS'],
+    ['# accounts & % AUM disclosed','PASS'],['Verification disclosure included','PASS'],
+    ['Fee schedule disclosed','PASS'],['Internal dispersion (≥6 accts)','N/A — 2 accts'],
+    ['3-yr std dev (after 36 months)','N/A — <36 months'],
+  ];
+  document.getElementById('gips-checklist').innerHTML = checks.map(([l, s]) => {
+    const warn = s.startsWith('N/A');
+    return `<div class="gips-row"><span class="gips-key">${l}</span><span class="gips-val" style="color:${warn?'var(--gold)':'var(--text3)'}">${s}</span>${warn?'<span class="gips-note">NOTE</span>':'<span class="gips-pass">PASS</span>'}</div>`;
+  }).join('');
+}
+
+function buildRulesMonitor() {
+  const rules = [
+    { name:'Max Single-Security',     rule:'≤10% per acct',  ok:true,  detail:'Highest: 8.2% (AAPL, FID-003)' },
+    { name:'Equity Allocation Bands', rule:'±5% of target',  ok:false, detail:'FID-007: +4.2% equity drift' },
+    { name:'Cash Minimum',            rule:'≥1% buffer',     ok:true,  detail:'All accounts ≥ 2.1%' },
+    { name:'Prohibited Securities',   rule:'0 restricted',   ok:true,  detail:'No violations across 847 positions' },
+    { name:'Leverage Limit',          rule:'None except 009', ok:true, detail:'All accounts clean' },
+    { name:'ESG Screens (FID-004)',   rule:'0 violations',   ok:true,  detail:'Screening current Mar 1' },
+    { name:'Duration (FID-010)',      rule:'±2yr liability',  ok:true,  detail:'8.4yr vs 8.7yr liability' },
+    { name:'Annual Turnover',         rule:'≤40% tax-sens.',  ok:true, detail:'YTD annualized: 18%' },
+    { name:'Counterparty Exposure',   rule:'≤5% single',     ok:true,  detail:'Max: 3.2% (Fidelity)' },
+    { name:'Derivative Usage',        rule:'Hedge only',      ok:true, detail:'No derivatives held' },
+  ];
+  document.getElementById('rules-body').innerHTML = rules.map(r =>
+    `<div class="alert-row ${r.ok?'alert-good':'alert-warn'}" style="margin-bottom:5px">
+      <span>${r.ok?'✅':'⚠️'}</span>
+      <div style="flex:1">
+        <span style="font-weight:600;color:${r.ok?'var(--text)':'var(--gold)'}">${r.name}</span>
+        <span style="color:var(--text3);font-size:11px;margin-left:8px">${r.rule}</span>
+        <div style="font-size:11px;color:${r.ok?'var(--text3)':'var(--gold)'};margin-top:2px">${r.detail}</div>
+      </div>
+      <span class="chip ${r.ok?'chip-up':'chip-gold'}">${r.ok?'Pass':'Alert'}</span>
+    </div>`
+  ).join('');
+}
+
+function buildIPS() {
+  document.getElementById('ips-table').innerHTML = DATA.ips.map(r =>
+    `<tr>
+      <td class="mono">${r.acct}</td><td>${r.constraint}</td>
+      <td class="mono">${r.limit}</td>
+      <td class="mono" style="color:${r.ok?'var(--text)':'var(--gold)'}">${r.curr}</td>
+      <td class="mono" style="color:${r.ok?'var(--green)':'var(--red)'}">${r.room}</td>
+      <td><span class="chip ${r.ok?'chip-up':'chip-gold'}">${r.ok?'Compliant':'Review'}</span></td>
+    </tr>`
+  ).join('');
+}
+
+function buildAudit() {
+  const ac = { LOGIN:'chip-blue', VIEW:'chip-blue', TRADE:'chip-gold', REBALANCE:'chip-purple', APPROVE:'chip-up', REPORT:'chip-blue' };
+  document.getElementById('audit-table').innerHTML = DATA.audit.map(e =>
+    `<tr>
+      <td class="mono" style="font-size:10px;color:var(--text3)">${e.ts}</td>
+      <td style="font-size:11px">${e.user}</td>
+      <td><span class="chip ${ac[e.action]||'chip-blue'}">${e.action}</span></td>
+      <td class="mono">${e.acct}</td>
+      <td style="font-size:11px;color:var(--text2)">${e.detail}</td>
+      <td class="mono" style="font-size:10px;color:var(--text3)">${e.ip}</td>
+      <td class="mono" style="font-size:9px;color:var(--text3)">${e.hash}</td>
+    </tr>`
+  ).join('');
+}
+
+// ─── BOOT ────────────────────────────────────────────
+(function init() {
+  initialized['overview'] = true;
+  buildOverview();
+})();
+
+</script>
+</body>
+</html>
