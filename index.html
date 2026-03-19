@@ -370,19 +370,121 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
 
 <!-- ══════════════════ MONTE CARLO ══════════════════ -->
 <div class="page" id="pg-montecarlo">
-  <div class="card"><div class="card-hd"><span class="card-t">Monte Carlo Simulation</span><span style="font-size:11px;color:var(--text3)">500 paths · Log-normal</span></div>
-  <div class="card-bd">
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px">
-      <div><div class="sl">Initial ($M)</div><input type="number" id="mc-init" value="100" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
-      <div><div class="sl">Annual Return %</div><input type="number" id="mc-ret" value="7.5" step=".5" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
-      <div><div class="sl">Volatility %</div><input type="number" id="mc-vol" value="9.1" step=".5" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
-      <div><div class="sl">Years</div><input type="number" id="mc-years" value="10" min="1" max="40" style="width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-size:12px;font-family:'DM Mono',monospace"></div>
-      <div style="display:flex;align-items:flex-end"><button class="btn" onclick="runMC()" style="width:100%">▶ Run</button></div>
+  <div class="kpi-row k4" id="mc-kpis">
+    <div class="kpi"><div class="kpi-l">Portfolio Value Today</div><div class="kpi-v" id="mc-kpi-start">$100.0M</div><div class="kpi-s">Starting balance</div></div>
+    <div class="kpi"><div class="kpi-l">Projected Value (Median)</div><div class="kpi-v" style="color:var(--accent)" id="mc-kpi-median">—</div><div class="kpi-s" id="mc-kpi-yr">In 10 years</div></div>
+    <div class="kpi"><div class="kpi-l">Best Case (P90)</div><div class="kpi-v" style="color:var(--green)" id="mc-kpi-p90">—</div><div class="kpi-s">90th percentile</div></div>
+    <div class="kpi"><div class="kpi-l">Stress Case (P10)</div><div class="kpi-v" style="color:var(--red)" id="mc-kpi-p10">—</div><div class="kpi-s">10th percentile</div></div>
+  </div>
+
+  <div class="g2" style="margin-bottom:14px">
+    <!-- CONTROLS -->
+    <div class="card">
+      <div class="card-hd"><span class="card-t">Simulation Parameters</span><span style="font-size:11px;color:var(--text3)">Adjust sliders — chart updates live</span></div>
+      <div class="card-bd">
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text2)">Current Portfolio Value</span>
+            <span class="mono" id="lbl-init" style="font-size:13px;font-weight:700;color:var(--text)">$100M</span>
+          </div>
+          <input type="range" id="sl-init" min="1" max="500" value="100" step="1" oninput="mcLive()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px"><span>$1M</span><span>$500M</span></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text2)">Expected Annual Return</span>
+            <span class="mono" id="lbl-ret" style="font-size:13px;font-weight:700;color:var(--green)">7.5%</span>
+          </div>
+          <input type="range" id="sl-ret" min="1" max="20" value="75" step="1" oninput="mcLive()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px"><span>1%</span><span>20%</span></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text2)">Annual Volatility</span>
+            <span class="mono" id="lbl-vol" style="font-size:13px;font-weight:700;color:var(--gold)">9.1%</span>
+          </div>
+          <input type="range" id="sl-vol" min="1" max="40" value="91" step="1" oninput="mcLive()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px"><span>1%</span><span>40%</span></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text2)">Annual Contributions / Withdrawals</span>
+            <span class="mono" id="lbl-contrib" style="font-size:13px;font-weight:700;color:var(--teal)">+$0</span>
+          </div>
+          <input type="range" id="sl-contrib" min="-50" max="50" value="0" step="1" oninput="mcLive()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px"><span>-$50M/yr</span><span style="text-align:center">$0</span><span>+$50M/yr</span></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text2)">Time Horizon</span>
+            <span class="mono" id="lbl-yrs" style="font-size:13px;font-weight:700;color:var(--text)">10 Years</span>
+          </div>
+          <input type="range" id="sl-yrs" min="1" max="40" value="10" step="1" oninput="mcLive()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px"><span>1 yr</span><span>40 yrs</span></div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:12px;color:var(--text2)">Number of Simulations</span>
+            <span class="mono" id="lbl-sims" style="font-size:13px;font-weight:700;color:var(--text)">500</span>
+          </div>
+          <input type="range" id="sl-sims" min="100" max="2000" value="500" step="100" oninput="mcLive()">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:3px"><span>100</span><span>2,000</span></div>
+        </div>
+
+        <!-- Inflation toggle -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg3);border-radius:8px">
+          <div>
+            <div style="font-size:12px;color:var(--text2)">Inflation Adjustment</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px">Deflate projections at 3% annually</div>
+          </div>
+          <div onclick="toggleInflation()" id="infl-track" style="width:36px;height:20px;background:var(--bg4);border-radius:10px;cursor:pointer;position:relative;transition:background .2s;border:1px solid var(--border2)">
+            <div id="infl-thumb" style="position:absolute;left:2px;top:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:transform .2s"></div>
+          </div>
+        </div>
+
+      </div>
     </div>
-    <div style="position:relative;height:280px"><canvas id="c-mc"></canvas></div>
-    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px" id="mc-stats"></div>
-  </div></div>
+
+    <!-- PERCENTILE TABLE -->
+    <div class="card">
+      <div class="card-hd"><span class="card-t">Percentile Outcomes</span></div>
+      <div class="card-bd" style="padding:0">
+        <table>
+          <thead><tr><th>Percentile</th><th>Scenario</th><th>Final Value</th><th>Total Return</th><th>CAGR</th></tr></thead>
+          <tbody id="mc-pct-table"></tbody>
+        </table>
+        <div style="padding:12px 14px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Probability of Reaching Target</div>
+          <div id="mc-prob-bars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="card">
+    <div class="card-hd">
+      <span class="card-t">Monte Carlo Simulation — Path Distribution</span>
+      <span style="font-size:11px;color:var(--text3)" id="mc-sim-label">500 paths · Log-normal returns</span>
+    </div>
+    <div class="card-bd">
+      <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:20px;height:2px;background:rgba(34,197,94,.6);display:inline-block"></span>P90 Best Case</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:20px;height:3px;background:#3d7fff;display:inline-block"></span>P50 Median</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:20px;height:2px;background:rgba(239,68,68,.6);display:inline-block"></span>P10 Stress Case</span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><span style="width:20px;height:2px;background:rgba(61,127,255,.15);display:inline-block"></span>Individual Paths</span>
+      </div>
+      <div style="position:relative;height:320px"><canvas id="c-mc"></canvas></div>
+    </div>
+  </div>
 </div>
+
 
 <!-- ══════════════════ WHAT-IF ══════════════════ -->
 <div class="page" id="pg-whatif">
@@ -909,7 +1011,481 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;heigh
   </div>
   <div class="card">
     <div class="card-hd"><span class="card-t">Sub-Asset Class Detail with Fund Breakdown</span></div>
-    <div class="card-bd" id="aa-detail"><div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:#3d7fff;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:#e8ecf4">US Equity</div><div style="font-family:DM Mono,monospace;margin-left:auto;font-size:13px;font-weight:700;color:#3d7fff">30.37%</div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US Large Cap Blend</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">18.14%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 18.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.14%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:90.7%;background:#3d7fff;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:90.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FXAIX — Fidelity 500 Index (18.14%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US Large Cap Growth</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">8.76%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 8.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#f59e0b;margin-left:6px">+0.76%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:43.8%;background:#3d7fff;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:40.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FCNTX — Contrafund (1.98%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FGCKX — Growth Co (1.23%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">MSFT (1.79%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">AAPL (1.47%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">NVDA (1.28%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">AMZN (0.67%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">GOOGL (0.37%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US Mid Cap Blend</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">2.94%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 3.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.06%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:14.7%;background:#3d7fff;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:15.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FSMAX — Fidelity Extended Market (2.94%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US Small Cap Blend</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">0.53%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 1.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.47%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:2.7%;background:#3d7fff;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:5.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FSSNX — Fidelity Small Cap Index (0.53%)</span></div></div></div><div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:#a78bfa;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:#e8ecf4">Int'l Equity</div><div style="font-family:DM Mono,monospace;margin-left:auto;font-size:13px;font-weight:700;color:#a78bfa">8.5%</div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Int'l Developed</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">4.51%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 5.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.49%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:22.5%;background:#a78bfa;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:25.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FSPSX — Fidelity Intl Index (3.31%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">EFA — iShares MSCI EAFE (1.20%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">European Equity</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">0.42%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 0.5%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.08%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:2.1%;background:#a78bfa;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:2.5%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FIEUX — Fidelity Europe Fund (0.42%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Asia Pacific</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">0.43%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 0.5%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.07%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:2.1%;background:#a78bfa;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:2.5%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FPADX — Fidelity Pacific Basin (0.43%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Emerging Markets</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">3.14%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 3.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.14%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:15.7%;background:#a78bfa;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:15.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">EEM — iShares MSCI EM (1.87%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">VWO — Vanguard FTSE EM (1.27%)</span></div></div></div><div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:#f59e0b;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:#e8ecf4">Fixed Income</div><div style="font-family:DM Mono,monospace;margin-left:auto;font-size:13px;font-weight:700;color:#f59e0b">19.96%</div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US Aggregate Bond</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">15.22%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 15.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.22%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:76.1%;background:#f59e0b;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:75.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">AGG — iShares Core Agg (9.54%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FBIDX — Fidelity US Bond (3.26%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FBIIX — Fidelity Bond Index (2.42%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Core Intermediate</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">1.45%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 1.5%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.05%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:7.2%;background:#f59e0b;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:7.5%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FTBFX — Fidelity Total Bond (1.45%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Long Duration Bond</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">2.12%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.12%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:10.6%;background:#f59e0b;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:10.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">TLT — iShares 20+ Yr Treasury (1.35%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">BLV — Vanguard Long-Term Bond (0.77%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US Government Bond</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">0.71%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 0.8%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.04%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:3.5%;background:#f59e0b;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:3.8%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FSITX — Fidelity Interm Treasury (0.71%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Muni Bond</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">0.46%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 0.5%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.04%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:2.3%;background:#f59e0b;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:2.5%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FLTMX — Fidelity Ltd Term Muni (0.46%)</span></div></div></div><div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:#22c55e;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:#e8ecf4">Alternatives</div><div style="font-family:DM Mono,monospace;margin-left:auto;font-size:13px;font-weight:700;color:#22c55e">12.3%</div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Multi-Strategy Alt</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">3.62%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 4.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.38%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:18.1%;background:#22c55e;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:20.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">BLDSX — BlackRock Multi-Alt (0.90%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">MALOX — BlackRock Global Alloc (0.35%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">ABRYX — Abrdn Abs Return (0.29%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">Various Hedge Fund SPVs (2.08%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Market Neutral</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">1.82%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.18%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:9.1%;background:#22c55e;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:10.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">QDSNX — AQR Diversified Arb (0.51%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">Long/Short Equity Fund (1.31%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Private Equity</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">4.12%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 4.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.12%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:20.6%;background:#22c55e;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:20.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">PE Fund I — Vintage 2023 (1.84%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">PE Fund II — Vintage 2024 (2.28%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Commodities</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">2.74%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#f59e0b;margin-left:6px">+0.74%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:13.7%;background:#22c55e;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:10.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">DJP — iPath Bloomberg Cmdty (1.42%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">PDBC — Invesco Cmdty ETF (1.32%)</span></div></div></div><div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:#14b8a6;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:#e8ecf4">Real Assets</div><div style="font-family:DM Mono,monospace;margin-left:auto;font-size:13px;font-weight:700;color:#14b8a6">6.2%</div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">US REITs</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">2.46%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.5%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.04%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:12.3%;background:#14b8a6;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:12.5%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">VNQ — Vanguard Real Estate (1.80%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FRESX — Fidelity Real Estate (0.66%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Int'l REITs</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">0.53%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 0.5%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.03%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:2.7%;background:#14b8a6;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:2.5%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FIREX — Fidelity Intl Real Estate (0.53%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Infrastructure</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">1.59%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.41%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:8.0%;background:#14b8a6;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:10.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">VPU — Vanguard Utilities ETF (1.59%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Inflation-Linked Bonds</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">1.62%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.38%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:8.1%;background:#14b8a6;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:10.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FIPBX — Fidelity Inflation-Protected (1.62%)</span></div></div></div><div style="margin-bottom:20px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:10px;height:10px;border-radius:2px;background:#6b7280;flex-shrink:0"></div><div style="font-size:13px;font-weight:700;color:#e8ecf4">Cash & Equivalents</div><div style="font-family:DM Mono,monospace;margin-left:auto;font-size:13px;font-weight:700;color:#6b7280">6.0%</div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Govt Money Market</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#6b7280">2.11%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 2.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.11%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:10.5%;background:#6b7280;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:10.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">SPAXX — Fidelity Govt MMkt (1.48%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FDRXX — Fidelity Govt Cash Res (0.63%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Treasury Money Market</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#6b7280">0.83%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 1.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">-0.17%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:4.1%;background:#6b7280;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:5.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">FZFXX — Fidelity Treasury MMkt (0.83%)</span></div></div><div style="background:#161b24;border-radius:6px;padding:10px 12px;margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:12px;font-weight:600;color:#e8ecf4;flex:1">Cash Equivalents</div><div style="font-family:DM Mono,monospace;font-size:12px;color:#6b7280">3.06%</div><div style="font-size:10px;color:#5a6478;margin-left:4px">tgt 3.0%</div><div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px">+0.06%</div></div><div style="position:relative;height:6px;background:#1e2535;border-radius:3px;margin-bottom:6px"><div style="position:absolute;left:0;top:0;height:100%;width:15.3%;background:#6b7280;opacity:0.6;border-radius:3px"></div><div style="position:absolute;left:15.0%;top:-2px;width:2px;height:10px;background:#fff;opacity:0.5;border-radius:1px"></div></div><div><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">Fidelity Core Position (2.14%)</span><span style="font-size:10px;font-family:DM Mono,monospace;background:#1e2535;color:#8a95aa;padding:2px 7px;border-radius:10px;margin:2px 2px 0 0;display:inline-block">Sweep Accounts (0.92%)</span></div></div></div></div>
+    <div class="card-bd" id="aa-detail" style="padding:12px"><div style="border:1px solid #2e3a52;border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div onclick="toggleCat('US_Equity')" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0f1218;user-select:none" onmouseover="this.style.background='#161b24'" onmouseout="this.style.background='#0f1218'">
+        <div style="width:12px;height:12px;border-radius:3px;background:#3d7fff;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#e8ecf4;flex:1">US Equity</div>
+        <div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:#3d7fff">30.37%</div>
+        <div style="font-size:11px;color:#5a6478;margin-left:8px">≈ $30.4B AUM</div>
+        <div style="margin-left:10px;color:#5a6478;font-size:14px;transition:transform .2s" id="cat-arr-US_Equity">▼</div>
+      </div>
+      <div id="cat-US_Equity" style="padding:12px;background:#0a0c10">
+        <div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_Large_Cap_Blend')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US Large Cap Blend</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">18.14%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 18.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.14%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_Large_Cap_Blend">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:90.7%;background:#3d7fff;opacity:0.7;position:relative"><div style="position:absolute;left:90.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_Large_Cap_Blend" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FXAIX</span><span style="color:#8a95aa">Fidelity 500 Index Fund (18.14%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#3d7fff">18.14%  ≈  $18.2B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_Large_Cap_Growth')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US Large Cap Growth</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">8.76%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 8.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#f59e0b;margin-left:6px;min-width:44px;text-align:right">+0.76%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_Large_Cap_Growth">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:43.8%;background:#3d7fff;opacity:0.7;position:relative"><div style="position:absolute;left:40.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_Large_Cap_Growth" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FCNTX</span><span style="color:#8a95aa">Fidelity Contrafund (1.98%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FGCKX</span><span style="color:#8a95aa">Fidelity Growth Company (1.23%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">MSFT</span><span style="color:#8a95aa">Microsoft Corp. (1.79%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">AAPL</span><span style="color:#8a95aa">Apple Inc. (1.47%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">NVDA</span><span style="color:#8a95aa">NVIDIA Corp. (1.28%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">AMZN</span><span style="color:#8a95aa">Amazon.com Inc. (0.67%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">GOOGL</span><span style="color:#8a95aa">Alphabet Inc. (0.37%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#3d7fff">8.76%  ≈  $8.8B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_Mid_Cap_Blend')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US Mid Cap Blend</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">2.94%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 3.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.06%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_Mid_Cap_Blend">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:14.7%;background:#3d7fff;opacity:0.7;position:relative"><div style="position:absolute;left:15.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_Mid_Cap_Blend" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FSMAX</span><span style="color:#8a95aa">Fidelity Extended Market Index (2.94%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#3d7fff">2.94%  ≈  $2.9B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_Small_Cap_Blend')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US Small Cap Blend</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#3d7fff">0.53%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 1.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.47%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_Small_Cap_Blend">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:2.7%;background:#3d7fff;opacity:0.7;position:relative"><div style="position:absolute;left:5.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_Small_Cap_Blend" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FSSNX</span><span style="color:#8a95aa">Fidelity Small Cap Index (0.53%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#3d7fff">0.53%  ≈  $0.5B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div style="border:1px solid #2e3a52;border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div onclick="toggleCat('Intl_Equity')" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0f1218;user-select:none" onmouseover="this.style.background='#161b24'" onmouseout="this.style.background='#0f1218'">
+        <div style="width:12px;height:12px;border-radius:3px;background:#a78bfa;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#e8ecf4;flex:1">Int'l Equity</div>
+        <div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:#a78bfa">8.50%</div>
+        <div style="font-size:11px;color:#5a6478;margin-left:8px">≈ $8.5B AUM</div>
+        <div style="margin-left:10px;color:#5a6478;font-size:14px;transition:transform .2s" id="cat-arr-Intl_Equity">▼</div>
+      </div>
+      <div id="cat-Intl_Equity" style="padding:12px;background:#0a0c10">
+        <div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Intl_Developed_Large')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Int'l Developed Large</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">4.51%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 5.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.49%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Intl_Developed_Large">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:22.5%;background:#a78bfa;opacity:0.7;position:relative"><div style="position:absolute;left:25.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Intl_Developed_Large" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FSPSX</span><span style="color:#8a95aa">Fidelity Intl Index Fund (3.31%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">EFA</span><span style="color:#8a95aa">iShares MSCI EAFE ETF (1.20%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#a78bfa">4.51%  ≈  $4.5B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('European_Equity')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">European Equity</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">0.42%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 0.5%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.08%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-European_Equity">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:2.1%;background:#a78bfa;opacity:0.7;position:relative"><div style="position:absolute;left:2.5%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-European_Equity" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FIEUX</span><span style="color:#8a95aa">Fidelity Europe Fund (0.42%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#a78bfa">0.42%  ≈  $0.4B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Asia_Pacific_Equity')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Asia Pacific Equity</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">0.43%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 0.5%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.07%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Asia_Pacific_Equity">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:2.1%;background:#a78bfa;opacity:0.7;position:relative"><div style="position:absolute;left:2.5%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Asia_Pacific_Equity" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FPADX</span><span style="color:#8a95aa">Fidelity Pacific Basin Fund (0.43%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#a78bfa">0.43%  ≈  $0.4B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Emerging_Markets')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Emerging Markets</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#a78bfa">3.14%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 3.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.14%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Emerging_Markets">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:15.7%;background:#a78bfa;opacity:0.7;position:relative"><div style="position:absolute;left:15.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Emerging_Markets" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">EEM</span><span style="color:#8a95aa">iShares MSCI Emerging Markets (1.87%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">VWO</span><span style="color:#8a95aa">Vanguard FTSE Emerging Markets (1.27%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#a78bfa">3.14%  ≈  $3.1B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div style="border:1px solid #2e3a52;border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div onclick="toggleCat('Fixed_Income')" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0f1218;user-select:none" onmouseover="this.style.background='#161b24'" onmouseout="this.style.background='#0f1218'">
+        <div style="width:12px;height:12px;border-radius:3px;background:#f59e0b;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#e8ecf4;flex:1">Fixed Income</div>
+        <div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:#f59e0b">19.96%</div>
+        <div style="font-size:11px;color:#5a6478;margin-left:8px">≈ $20.0B AUM</div>
+        <div style="margin-left:10px;color:#5a6478;font-size:14px;transition:transform .2s" id="cat-arr-Fixed_Income">▼</div>
+      </div>
+      <div id="cat-Fixed_Income" style="padding:12px;background:#0a0c10">
+        <div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_Aggregate_Bond')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US Aggregate Bond</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">15.22%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 15.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.22%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_Aggregate_Bond">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:76.1%;background:#f59e0b;opacity:0.7;position:relative"><div style="position:absolute;left:75.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_Aggregate_Bond" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">AGG</span><span style="color:#8a95aa">iShares Core US Agg Bond (9.54%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FBIDX</span><span style="color:#8a95aa">Fidelity US Bond Index (3.26%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FBIIX</span><span style="color:#8a95aa">Fidelity Bond Index Fund (2.42%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#f59e0b">15.22%  ≈  $15.3B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Core_Intermediate_Bond')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Core Intermediate Bond</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">1.45%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 1.5%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.05%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Core_Intermediate_Bond">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:7.2%;background:#f59e0b;opacity:0.7;position:relative"><div style="position:absolute;left:7.5%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Core_Intermediate_Bond" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FTBFX</span><span style="color:#8a95aa">Fidelity Total Bond Fund (1.45%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#f59e0b">1.45%  ≈  $1.5B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Long_Duration_Bond')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Long Duration Bond</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">2.12%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.12%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Long_Duration_Bond">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:10.6%;background:#f59e0b;opacity:0.7;position:relative"><div style="position:absolute;left:10.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Long_Duration_Bond" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">TLT</span><span style="color:#8a95aa">iShares 20+ Year Treasury (1.35%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">BLV</span><span style="color:#8a95aa">Vanguard Long-Term Bond ETF (0.77%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#f59e0b">2.12%  ≈  $2.1B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_Government_Bond')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US Government Bond</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">0.71%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 0.8%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.04%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_Government_Bond">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:3.5%;background:#f59e0b;opacity:0.7;position:relative"><div style="position:absolute;left:3.8%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_Government_Bond" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FSITX</span><span style="color:#8a95aa">Fidelity Interm. Treasury Index (0.71%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#f59e0b">0.71%  ≈  $0.7B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Muni_Bond')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Muni Bond</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#f59e0b">0.46%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 0.5%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.04%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Muni_Bond">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:2.3%;background:#f59e0b;opacity:0.7;position:relative"><div style="position:absolute;left:2.5%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Muni_Bond" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FLTMX</span><span style="color:#8a95aa">Fidelity Ltd. Term Muni Income (0.46%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#f59e0b">0.46%  ≈  $0.5B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div style="border:1px solid #2e3a52;border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div onclick="toggleCat('Alternatives')" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0f1218;user-select:none" onmouseover="this.style.background='#161b24'" onmouseout="this.style.background='#0f1218'">
+        <div style="width:12px;height:12px;border-radius:3px;background:#22c55e;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#e8ecf4;flex:1">Alternatives</div>
+        <div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:#22c55e">12.30%</div>
+        <div style="font-size:11px;color:#5a6478;margin-left:8px">≈ $12.3B AUM</div>
+        <div style="margin-left:10px;color:#5a6478;font-size:14px;transition:transform .2s" id="cat-arr-Alternatives">▼</div>
+      </div>
+      <div id="cat-Alternatives" style="padding:12px;background:#0a0c10">
+        <div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Multi-Strategy_Alt')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Multi-Strategy Alt</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">3.62%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 4.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.38%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Multi-Strategy_Alt">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:18.1%;background:#22c55e;opacity:0.7;position:relative"><div style="position:absolute;left:20.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Multi-Strategy_Alt" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">BLDSX</span><span style="color:#8a95aa">BlackRock Multi-Alternative Inst. (0.90%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">MALOX</span><span style="color:#8a95aa">BlackRock Global Allocation (0.35%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">ABRYX</span><span style="color:#8a95aa">Abrdn Abs. Return Strategies (0.29%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">Various Hedge Fund SPVs</span><span style="color:#8a95aa">Various Hedge Fund SPVs (2.08%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#22c55e">3.62%  ≈  $3.6B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Market_Neutral')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Market Neutral</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">1.82%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.18%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Market_Neutral">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:9.1%;background:#22c55e;opacity:0.7;position:relative"><div style="position:absolute;left:10.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Market_Neutral" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">QDSNX</span><span style="color:#8a95aa">AQR Diversified Arbitrage (0.51%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">Long/Short Equity Fund</span><span style="color:#8a95aa">Long/Short Equity Fund (1.31%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#22c55e">1.82%  ≈  $1.8B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Private_Equity')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Private Equity</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">4.12%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 4.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.12%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Private_Equity">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:20.6%;background:#22c55e;opacity:0.7;position:relative"><div style="position:absolute;left:20.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Private_Equity" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">PE Fund I</span><span style="color:#8a95aa">Vintage 2023 (1.84%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">PE Fund II</span><span style="color:#8a95aa">Vintage 2024 (2.28%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#22c55e">4.12%  ≈  $4.1B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Commodities')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Commodities</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#22c55e">2.74%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#f59e0b;margin-left:6px;min-width:44px;text-align:right">+0.74%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Commodities">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:13.7%;background:#22c55e;opacity:0.7;position:relative"><div style="position:absolute;left:10.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Commodities" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">DJP</span><span style="color:#8a95aa">iPath Bloomberg Commodity (1.42%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">PDBC</span><span style="color:#8a95aa">Invesco Optimum Yield Cmdty (1.32%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#22c55e">2.74%  ≈  $2.7B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div style="border:1px solid #2e3a52;border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div onclick="toggleCat('Real_Assets')" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0f1218;user-select:none" onmouseover="this.style.background='#161b24'" onmouseout="this.style.background='#0f1218'">
+        <div style="width:12px;height:12px;border-radius:3px;background:#14b8a6;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#e8ecf4;flex:1">Real Assets</div>
+        <div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:#14b8a6">6.20%</div>
+        <div style="font-size:11px;color:#5a6478;margin-left:8px">≈ $6.2B AUM</div>
+        <div style="margin-left:10px;color:#5a6478;font-size:14px;transition:transform .2s" id="cat-arr-Real_Assets">▼</div>
+      </div>
+      <div id="cat-Real_Assets" style="padding:12px;background:#0a0c10">
+        <div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('US_REITs')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">US REITs</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">2.46%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.5%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.04%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-US_REITs">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:12.3%;background:#14b8a6;opacity:0.7;position:relative"><div style="position:absolute;left:12.5%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-US_REITs" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">VNQ</span><span style="color:#8a95aa">Vanguard Real Estate ETF (1.80%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FRESX</span><span style="color:#8a95aa">Fidelity Real Estate Index (0.66%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#14b8a6">2.46%  ≈  $2.5B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Intl_REITs')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Int'l REITs</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">0.53%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 0.5%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.03%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Intl_REITs">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:2.7%;background:#14b8a6;opacity:0.7;position:relative"><div style="position:absolute;left:2.5%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Intl_REITs" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FIREX</span><span style="color:#8a95aa">Fidelity Intl Real Estate Fund (0.53%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#14b8a6">0.53%  ≈  $0.5B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Infrastructure')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Infrastructure</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">1.59%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.41%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Infrastructure">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:8.0%;background:#14b8a6;opacity:0.7;position:relative"><div style="position:absolute;left:10.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Infrastructure" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">VPU</span><span style="color:#8a95aa">Vanguard Utilities ETF (1.59%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#14b8a6">1.59%  ≈  $1.6B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Inflation-Linked_Bonds')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Inflation-Linked Bonds</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#14b8a6">1.62%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.38%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Inflation-Linked_Bonds">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:8.1%;background:#14b8a6;opacity:0.7;position:relative"><div style="position:absolute;left:10.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Inflation-Linked_Bonds" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FIPBX</span><span style="color:#8a95aa">Fidelity Inflation-Protected Bond (1.62%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#14b8a6">1.62%  ≈  $1.6B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><div style="border:1px solid #2e3a52;border-radius:10px;overflow:hidden;margin-bottom:14px">
+      <div onclick="toggleCat('Cash_and_Equivalents')" style="display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#0f1218;user-select:none" onmouseover="this.style.background='#161b24'" onmouseout="this.style.background='#0f1218'">
+        <div style="width:12px;height:12px;border-radius:3px;background:#6b7280;flex-shrink:0"></div>
+        <div style="font-size:14px;font-weight:700;color:#e8ecf4;flex:1">Cash & Equivalents</div>
+        <div style="font-family:DM Mono,monospace;font-size:14px;font-weight:700;color:#6b7280">6.00%</div>
+        <div style="font-size:11px;color:#5a6478;margin-left:8px">≈ $6.0B AUM</div>
+        <div style="margin-left:10px;color:#5a6478;font-size:14px;transition:transform .2s" id="cat-arr-Cash_and_Equivalents">▼</div>
+      </div>
+      <div id="cat-Cash_and_Equivalents" style="padding:12px;background:#0a0c10">
+        <div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Govt_Money_Market')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Govt Money Market</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#6b7280">2.11%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 2.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.11%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Govt_Money_Market">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:10.5%;background:#6b7280;opacity:0.7;position:relative"><div style="position:absolute;left:10.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Govt_Money_Market" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">SPAXX</span><span style="color:#8a95aa">Fidelity Govt Money Market (1.48%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FDRXX</span><span style="color:#8a95aa">Fidelity Govt Cash Reserves (0.63%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#6b7280">2.11%  ≈  $2.1B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Treasury_Money_Market')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Treasury Money Market</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#6b7280">0.83%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 1.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">-0.17%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Treasury_Money_Market">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:4.1%;background:#6b7280;opacity:0.7;position:relative"><div style="position:absolute;left:5.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Treasury_Money_Market" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">FZFXX</span><span style="color:#8a95aa">Fidelity Treasury Money Market (0.83%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#6b7280">0.83%  ≈  $0.8B</span>
+            </div>
+          </div>
+        </div><div style="border:1px solid #252d3d;border-radius:8px;overflow:hidden;margin-bottom:8px">
+          <div onclick="toggleSub('Cash_Equivalents')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:#161b24;user-select:none" onmouseover="this.style.background='#1e2535'" onmouseout="this.style.background='#161b24'">
+            <div style="flex:1;font-size:12px;font-weight:600;color:#e8ecf4">Cash Equivalents</div>
+            <div style="font-family:DM Mono,monospace;font-size:12px;color:#6b7280">3.06%</div>
+            <div style="font-size:10px;color:#5a6478;margin-left:6px">tgt 3.0%</div>
+            <div style="font-family:DM Mono,monospace;font-size:10px;color:#22c55e;margin-left:6px;min-width:44px;text-align:right">+0.06%</div>
+            <div style="margin-left:8px;color:#5a6478;font-size:12px;transition:transform .2s" id="arr-Cash_Equivalents">▶</div>
+          </div>
+          <div style="height:3px;background:#1e2535"><div style="height:100%;width:15.3%;background:#6b7280;opacity:0.7;position:relative"><div style="position:absolute;left:15.0%;top:-1px;width:2px;height:5px;background:#fff;opacity:0.6"></div></div></div>
+          <div id="sub-Cash_Equivalents" style="display:none;padding:12px 14px;background:#0f1218;border-top:1px solid #252d3d">
+            <div style="font-size:10px;font-weight:700;color:#5a6478;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Fund Breakdown</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">Fidelity Core Position</span><span style="color:#8a95aa">Fidelity Core Position (2.14%)</span></div><div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #252d3d;font-size:11px"><span style="font-family:DM Mono,monospace;color:#3d7fff">Sweep Accounts / Pending</span><span style="color:#8a95aa">Sweep Accounts / Pending (0.92%)</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;font-size:11px;font-weight:600;border-top:1px solid #252d3d">
+              <span style="color:#8a95aa">Sub-Class Total</span>
+              <span style="font-family:DM Mono,monospace;color:#6b7280">3.06%  ≈  $3.1B</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div></div>
   </div>
   <div class="g2">
     <div class="card"><div class="card-hd"><span class="card-t">Geographic Exposure</span></div>
@@ -1302,7 +1878,7 @@ function buildPage(id){
   else if(id==='performance') buildPerformance();
   else if(id==='attribution') buildAttribution();
   else if(id==='risk')        buildRisk();
-  else if(id==='montecarlo')  runMC();
+  else if(id==='montecarlo')  { setTimeout(function(){ runMC(); }, 100); }
   else if(id==='whatif')      buildWhatIf();
   else if(id==='transactions'){ renderTx(); }
   else if(id==='flows')       buildFlows();
@@ -1439,35 +2015,173 @@ function buildRisk(){
 }
 
 // ── MONTE CARLO ──
-function runMC(){
-  var init=parseFloat(document.getElementById('mc-init').value)||100;
-  var mu=parseFloat(document.getElementById('mc-ret').value)/100||.075;
-  var sigma=parseFloat(document.getElementById('mc-vol').value)/100||.091;
-  var years=parseInt(document.getElementById('mc-years').value)||10;
-  var steps=years*12,paths=500;
-  var r=rng(Date.now()&0xffff),all=[],finals=[];
-  for(var p=0;p<paths;p++){
-    var v=init,path=[v];
-    for(var t=0;t<steps;t++){var u1=Math.max(r(),1e-9),u2=r(),z=Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2);v=Math.max(0,v*(1+mu/12+sigma/Math.sqrt(12)*z));path.push(v);}
-    all.push(path);finals.push(path[steps]);
-  }
-  finals.sort(function(a,b){return a-b;});
-  var pct=function(x){return finals[Math.floor(finals.length*x)];};
-  var median=all.reduce(function(acc,p){return acc.map(function(v,i){return v+p[i]/paths;});},new Array(steps+1).fill(0));
-  var p90=all.reduce(function(acc,p){return acc.map(function(v,i){return Math.max(v,p[i]);});},new Array(steps+1).fill(0));
-  var p10=all.reduce(function(acc,p){return acc.map(function(v,i){return Math.min(v===0?Infinity:v,p[i]||Infinity);});},new Array(steps+1).fill(Infinity)).map(function(v){return v===Infinity?0:v;});
-  var lbls=Array.from({length:steps+1},function(_,i){var m=new Date('2026-01-01');m.setMonth(m.getMonth()+i);return i%12===0?m.getFullYear():'';});
-  var skip=Math.floor(paths/60);
-  var pds=all.filter(function(_,i){return i%skip===0;}).map(function(path){return {data:path,borderColor:'rgba(61,127,255,.04)',borderWidth:.5,pointRadius:0,fill:false};});
-  var mcDatasets = pds.concat([
-    {label:'P90',data:p90,borderColor:'rgba(34,197,94,.5)',borderWidth:1.5,pointRadius:0,fill:false},
-    {label:'P50',data:median,borderColor:'rgba(61,127,255,.9)',borderWidth:2.5,pointRadius:0,fill:false},
-    {label:'P10',data:p10,borderColor:'rgba(239,68,68,.5)',borderWidth:1.5,pointRadius:0,fill:false}
-  ]);
-  mk('c-mc',{type:'line',data:{labels:lbls,datasets:mcDatasets},options:{responsive:true,maintainAspectRatio:false,animation:{duration:400},plugins:{legend:{display:true,labels:{filter:function(l){return l.text==='P90'||l.text==='P50'||l.text==='P10';},color:'#8a95aa',font:{size:11},boxWidth:10}},tooltip:{mode:'index',intersect:false,filter:function(d){return d.datasetIndex>=pds.length;},backgroundColor:'#1e2535',borderColor:'#2e3a52',borderWidth:1,titleColor:'#e8ecf4',bodyColor:'#8a95aa'}},scales:{x:{ticks:{maxTicksLimit:years+1,color:'#5a6478'},grid:gc},y:{ticks:{color:'#5a6478',callback:function(v){return '$'+v.toFixed(0)+'M';}},grid:gc}}}});
-  var stats=document.getElementById('mc-stats');
-  if(stats)stats.innerHTML=[[pct(.10),'10th','var(--red)'],[pct(.25),'25th','var(--gold)'],[pct(.50),'Median','var(--text)'],[pct(.75),'75th','var(--green)'],[pct(.90),'90th','var(--teal)']].map(function(x){return '<div class="rm"><div class="rmv" style="color:'+x[2]+'">$'+x[0].toFixed(0)+'M</div><div class="rml">'+x[1]+' pctile</div><div class="rmb">Yr '+years+'</div></div>';}).join('');
+var mcInflation = false;
+var mcTimer = null;
+
+function toggleInflation() {
+  mcInflation = !mcInflation;
+  var track = document.getElementById('infl-track');
+  var thumb = document.getElementById('infl-thumb');
+  if (track) track.style.background = mcInflation ? 'var(--accent)' : 'var(--bg4)';
+  if (thumb) thumb.style.transform = mcInflation ? 'translateX(16px)' : 'translateX(0)';
+  mcLive();
 }
+
+function mcLive() {
+  // Debounce
+  if (mcTimer) clearTimeout(mcTimer);
+  mcTimer = setTimeout(function() { runMC(); }, 60);
+}
+
+function fmtVal(v) {
+  if (v >= 1000) return '$' + (v/1000).toFixed(1) + 'B';
+  if (v >= 1) return '$' + v.toFixed(1) + 'M';
+  return '$' + (v * 1000).toFixed(0) + 'K';
+}
+
+function runMC() {
+  var initEl = document.getElementById('sl-init');
+  var retEl  = document.getElementById('sl-ret');
+  var volEl  = document.getElementById('sl-vol');
+  var ctrEl  = document.getElementById('sl-contrib');
+  var yrsEl  = document.getElementById('sl-yrs');
+  var simEl  = document.getElementById('sl-sims');
+  if (!initEl) return;
+
+  var init   = parseFloat(initEl.value);
+  var mu     = parseFloat(retEl.value) / 10 / 100;
+  var sigma  = parseFloat(volEl.value) / 10 / 100;
+  var contrib= parseFloat(ctrEl.value);
+  var years  = parseInt(yrsEl.value);
+  var nsims  = parseInt(simEl.value);
+  var infl   = mcInflation ? 0.03 : 0;
+
+  // Update labels
+  var lbls = {
+    'lbl-init':   '$' + init + 'M',
+    'lbl-ret':    (mu*100).toFixed(1) + '%',
+    'lbl-vol':    (sigma*100).toFixed(1) + '%',
+    'lbl-contrib': (contrib >= 0 ? '+' : '') + '$' + contrib + 'M',
+    'lbl-yrs':    years + ' Year' + (years > 1 ? 's' : ''),
+    'lbl-sims':   nsims.toLocaleString(),
+  };
+  for (var k in lbls) {
+    var el = document.getElementById(k);
+    if (el) el.textContent = lbls[k];
+  }
+  var simLbl = document.getElementById('mc-sim-label');
+  if (simLbl) simLbl.textContent = nsims.toLocaleString() + ' paths · Log-normal' + (infl ? ' · Inflation-adjusted' : '');
+
+  // Run simulation
+  var steps = years * 12;
+  var all = [], finals = [];
+  var s = (Date.now() & 0xffff) || 42;
+  function rn() { s=(s*1664525+1013904223)&0xffffffff; return (s>>>0)/0xffffffff; }
+
+  for (var p = 0; p < nsims; p++) {
+    var v = init, path = [v];
+    for (var t = 0; t < steps; t++) {
+      var u1 = Math.max(rn(), 1e-9), u2 = rn();
+      var z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      v = Math.max(0, v * (1 + (mu - infl) / 12 + sigma / Math.sqrt(12) * z) + contrib / 12);
+      path.push(v);
+    }
+    all.push(path);
+    finals.push(path[steps]);
+  }
+
+  finals.sort(function(a, b) { return a - b; });
+  function pct(x) { return finals[Math.floor(finals.length * x)] || 0; }
+
+  var p10v = pct(.10), p25v = pct(.25), p50v = pct(.50), p75v = pct(.75), p90v = pct(.90);
+
+  // Compute median, p90, p10 paths
+  var medPath = all.reduce(function(acc, p) { return acc.map(function(v,i){ return v + p[i]/nsims; }); }, new Array(steps+1).fill(0));
+  var p90Path = all.reduce(function(acc, p) { return acc.map(function(v,i){ return Math.max(v, p[i]); }); }, new Array(steps+1).fill(0));
+  var p10Path = all.reduce(function(acc, p) { return acc.map(function(v,i){ return Math.min(v===0?1e9:v, p[i]||1e9); }); }, new Array(steps+1).fill(1e9)).map(function(v){ return v===1e9?0:v; });
+
+  // Update KPIs
+  var kpis = {'mc-kpi-start': fmtVal(init), 'mc-kpi-median': fmtVal(p50v), 'mc-kpi-p90': fmtVal(p90v), 'mc-kpi-p10': fmtVal(p10v), 'mc-kpi-yr': 'In ' + years + ' year' + (years>1?'s':'')};
+  for (var k in kpis) { var el = document.getElementById(k); if (el) el.textContent = kpis[k]; }
+
+  // Percentile table
+  var ptRows = [
+    [p90v, '90th', 'Best Case', 'var(--green)'],
+    [p75v, '75th', 'Above Average', 'var(--teal)'],
+    [p50v, '50th', 'Median', 'var(--accent)'],
+    [p25v, '25th', 'Below Average', 'var(--gold)'],
+    [p10v, '10th', 'Stress Case', 'var(--red)'],
+  ];
+  var ptEl = document.getElementById('mc-pct-table');
+  if (ptEl) {
+    ptEl.innerHTML = ptRows.map(function(r) {
+      var totalRet = init > 0 ? ((r[0] - init) / init * 100) : 0;
+      var cagr = init > 0 && years > 0 ? (Math.pow(r[0]/init, 1/years) - 1) * 100 : 0;
+      return '<tr><td class="mono" style="color:'+r[3]+'">'+r[1]+'</td><td style="color:var(--text2)">'+r[2]+'</td><td class="mono" style="color:'+r[3]+';font-weight:600">'+fmtVal(r[0])+'</td><td class="mono" style="color:'+(totalRet>=0?'var(--green)':'var(--red)')+'">'+( totalRet>=0?'+':'')+totalRet.toFixed(1)+'%</td><td class="mono">'+cagr.toFixed(2)+'%</td></tr>';
+    }).join('');
+  }
+
+  // Probability bars
+  var targets = [init*1.5, init*2, init*3, init*5];
+  var tlabels = ['1.5x (' + fmtVal(init*1.5) + ')', '2x (' + fmtVal(init*2) + ')', '3x (' + fmtVal(init*3) + ')', '5x (' + fmtVal(init*5) + ')'];
+  var pbEl = document.getElementById('mc-prob-bars');
+  if (pbEl) {
+    pbEl.innerHTML = targets.map(function(t, i) {
+      var prob = finals.filter(function(v){ return v >= t; }).length / finals.length * 100;
+      var c = prob >= 70 ? 'var(--green)' : prob >= 40 ? 'var(--gold)' : 'var(--red)';
+      return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="font-size:11px;color:var(--text2);width:120px;flex-shrink:0">'+tlabels[i]+'</div><div style="flex:1;height:6px;background:var(--bg4);border-radius:3px;overflow:hidden"><div style="height:100%;width:'+prob.toFixed(1)+'%;background:'+c+';border-radius:3px"></div></div><div class="mono" style="font-size:11px;color:'+c+';width:38px;text-align:right">'+prob.toFixed(0)+'%</div></div>';
+    }).join('');
+  }
+
+  // Chart
+  var skip = Math.max(1, Math.floor(nsims / 80));
+  var pathDatasets = all.filter(function(_, i){ return i % skip === 0; }).map(function(path){
+    return {data: path, borderColor: 'rgba(61,127,255,0.04)', borderWidth: 0.5, pointRadius: 0, fill: false};
+  });
+
+  var chartLabels = Array.from({length: steps+1}, function(_, i) {
+    var m = new Date('2026-01-01'); m.setMonth(m.getMonth()+i);
+    return i % 12 === 0 ? m.getFullYear() : '';
+  });
+
+  var cv = document.getElementById('c-mc');
+  if (!cv) return;
+  if (cv._c) { try { cv._c.destroy(); } catch(e) {} }
+  cv._c = new Chart(cv, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: pathDatasets.concat([
+        {label:'P90', data:p90Path, borderColor:'rgba(34,197,94,.6)',  borderWidth:2,   pointRadius:0, fill:false},
+        {label:'P50', data:medPath, borderColor:'rgba(61,127,255,.95)',borderWidth:3,   pointRadius:0, fill:false},
+        {label:'P10', data:p10Path, borderColor:'rgba(239,68,68,.6)',  borderWidth:2,   pointRadius:0, fill:false},
+      ])
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, animation: {duration: 200},
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          mode:'index', intersect:false,
+          filter: function(d){ return d.datasetIndex >= pathDatasets.length; },
+          backgroundColor:'#1e2535', borderColor:'#2e3a52', borderWidth:1, titleColor:'#e8ecf4', bodyColor:'#8a95aa',
+          callbacks: {
+            label: function(c) {
+              var names = ['P90 Best','P50 Median','P10 Stress'];
+              var n = c.datasetIndex - pathDatasets.length;
+              return (names[n] || '') + ': ' + fmtVal(c.raw);
+            }
+          }
+        }
+      },
+      scales: {
+        x: {ticks:{maxTicksLimit:years+1, color:'#5a6478'}, grid:{color:'rgba(255,255,255,.03)'}},
+        y: {ticks:{color:'#5a6478', callback:function(v){return fmtVal(v);}}, grid:{color:'rgba(255,255,255,.03)'}}
+      }
+    }
+  });
+}
+
 
 // ── WHAT-IF ──
 function buildWhatIf(){
@@ -1963,5 +2677,24 @@ function startApp() {
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onload="startApp()" onerror="startApp()"></script>
+
+<script>
+function toggleCat(id) {
+  var el = document.getElementById('cat-' + id);
+  var arr = document.getElementById('cat-arr-' + id);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.textContent = open ? '▶' : '▼';
+}
+function toggleSub(id) {
+  var el = document.getElementById('sub-' + id);
+  var arr = document.getElementById('arr-' + id);
+  if (!el) return;
+  var open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if (arr) arr.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+}
+</script>
 </body>
 </html>
